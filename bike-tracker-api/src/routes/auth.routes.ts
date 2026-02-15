@@ -111,7 +111,7 @@ app.openapi(loginRoute, async (c) => {
   }
 
   const token = await signToken({ sub: user.id }, c.env.JWT_SECRET);
-  return c.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+  return c.json({ token, user: { id: user.id, email: user.email, name: user.name } }, 200);
 });
 
 // ── Apple IDログイン ─────────────
@@ -210,7 +210,7 @@ app.openapi(refreshRoute, async (c) => {
     const { verifyToken } = await import("../utils/jwt");
     const payload = await verifyToken(header.slice(7), c.env.JWT_SECRET);
     const token = await signToken({ sub: payload.sub }, c.env.JWT_SECRET);
-    return c.json({ token });
+    return c.json({ token }, 200);
   } catch {
     return errorResponse(c, 401, "TOKEN_EXPIRED", "トークンが無効または期限切れです");
   }

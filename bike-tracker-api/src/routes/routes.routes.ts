@@ -96,7 +96,7 @@ app.openapi(listRoutesRoute, async (c) => {
   const data = hasMore ? results.slice(0, limit) : results;
   const nextCursor = hasMore ? data[data.length - 1].startedAt : null;
 
-  return c.json({ data, nextCursor });
+  return c.json({ data, nextCursor }, 200);
 });
 
 // ── ルート詳細 ──────────────────
@@ -140,7 +140,19 @@ app.openapi(getRouteRoute, async (c) => {
     .where(eq(routePoints.routeId, routeId))
     .orderBy(asc(routePoints.recordedAt));
 
-  return c.json({ ...route, points });
+  const sanitizedPoints = points.map((p) => ({
+    id: p.id,
+    routeId: p.routeId,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    recordedAt: p.recordedAt,
+    ...(p.altitude !== null && { altitude: p.altitude }),
+    ...(p.speed !== null && { speed: p.speed }),
+    ...(p.heading !== null && { heading: p.heading }),
+    ...(p.accuracy !== null && { accuracy: p.accuracy }),
+  }));
+
+  return c.json({ ...route, points: sanitizedPoints }, 200);
 });
 
 // ── 記録停止 ────────────────────
@@ -223,7 +235,7 @@ app.openapi(stopRouteRoute, async (c) => {
     status: "completed",
     distanceM: Math.round(totalDistance),
     durationS,
-  });
+  }, 200);
 });
 
 // ── タイトル編集 ────────────────
@@ -266,7 +278,7 @@ app.openapi(updateTitleRoute, async (c) => {
   }
 
   await db.update(routes).set({ title }).where(eq(routes.id, routeId));
-  return c.json({ id: routeId, title });
+  return c.json({ id: routeId, title }, 200);
 });
 
 // ── ルート削除 ──────────────────
@@ -306,7 +318,7 @@ app.openapi(deleteRouteRoute, async (c) => {
 
   await db.delete(routePoints).where(eq(routePoints.routeId, routeId));
   await db.delete(routes).where(eq(routes.id, routeId));
-  return c.json({ deleted: true });
+  return c.json({ deleted: true }, 200);
 });
 
 // ── GPSポイントバッチ送信 ───────
@@ -378,7 +390,7 @@ app.openapi(batchPointsRoute, async (c) => {
     }
   }
 
-  return c.json({ received: points.length, stored: filtered.length });
+  return c.json({ received: points.length, stored: filtered.length }, 200);
 });
 
 export default app;

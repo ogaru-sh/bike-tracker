@@ -16,9 +16,9 @@ type ErrorDetail = {
   message: string;
 };
 
-export function errorResponse(
+export function errorResponse<T extends ContentfulStatusCode>(
   c: Context,
-  status: ContentfulStatusCode,
+  status: T,
   code: ErrorCode,
   message: string,
   details?: ErrorDetail[],
