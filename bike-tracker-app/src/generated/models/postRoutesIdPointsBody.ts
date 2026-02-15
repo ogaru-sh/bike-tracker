@@ -5,7 +5,7 @@
  * バイク走行ルートを記録・管理するAPI
  * OpenAPI spec version: 1.0.0
  */
-import type { PostRoutesIdPointsBodyPointsItem } from './postRoutesIdPointsBodyPointsItem';
+import type { PostRoutesIdPointsBodyPointsItem } from "./postRoutesIdPointsBodyPointsItem";
 
 export type PostRoutesIdPointsBody = {
   /**

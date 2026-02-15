@@ -1,10 +1,10 @@
-import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
+import { create } from "zustand";
 import {
-  postAuthSignup,
-  postAuthLogin,
-  postAuthApple,
   getAuthMe,
+  postAuthApple,
+  postAuthLogin,
+  postAuthSignup,
 } from "@/generated/endpoints/auth/auth";
 
 const TOKEN_KEY = "auth_token";

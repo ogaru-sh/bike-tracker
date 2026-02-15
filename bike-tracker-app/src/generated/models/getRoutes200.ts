@@ -5,7 +5,7 @@
  * バイク走行ルートを記録・管理するAPI
  * OpenAPI spec version: 1.0.0
  */
-import type { GetRoutes200DataItem } from './getRoutes200DataItem';
+import type { GetRoutes200DataItem } from "./getRoutes200DataItem";
 
 export type GetRoutes200 = {
   data: GetRoutes200DataItem[];

@@ -30,7 +30,9 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
   const data = await res.json();
   const addr = data.address;
   // 日本の住所: 市区町村レベルを返す
-  return addr?.city || addr?.town || addr?.village || addr?.suburb || data.display_name || "不明な場所";
+  return (
+    addr?.city || addr?.town || addr?.village || addr?.suburb || data.display_name || "不明な場所"
+  );
 }
 
 /** ルートタイトル自動生成: 開始地点 → 終了地点 */

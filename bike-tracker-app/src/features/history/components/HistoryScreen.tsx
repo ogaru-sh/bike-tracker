@@ -1,15 +1,19 @@
-import { useState, useCallback, useMemo } from "react";
-import { FlatList, ActivityIndicator } from "react-native";
 import styled from "@emotion/native";
-import { useRouter } from "expo-router";
-import { showConfirm } from "@/components/ConfirmDialog";
-import { useGetRoutes, useDeleteRoutesId, getGetRoutesQueryKey } from "@/generated/endpoints/routes/routes";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList } from "react-native";
+import { showConfirm } from "@/components/ConfirmDialog";
+import type { FilterPeriod } from "@/config/constants";
+import {
+  getGetRoutesQueryKey,
+  useDeleteRoutesId,
+  useGetRoutes,
+} from "@/generated/endpoints/routes/routes";
+import type { GetRoutes200DataItem } from "@/generated/models";
+import { RouteCard } from "./RouteCard";
 import { RouteFilter } from "./RouteFilter";
 import { RouteSummary } from "./RouteSummary";
-import { RouteCard } from "./RouteCard";
-import type { FilterPeriod } from "@/config/constants";
-import type { GetRoutes200DataItem } from "@/generated/models";
 
 function getDateRange(period: FilterPeriod): { from?: string; to?: string } {
   if (period === "all") return {};
@@ -62,7 +66,9 @@ export function HistoryScreen() {
         onConfirm: () =>
           deleteMutation.mutate(
             { id },
-            { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetRoutesQueryKey() }) },
+            {
+              onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetRoutesQueryKey() }),
+            },
           ),
       });
     },

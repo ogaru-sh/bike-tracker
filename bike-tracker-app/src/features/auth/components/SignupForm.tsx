@@ -1,8 +1,8 @@
+import styled from "@emotion/native";
 import { useState } from "react";
 import { Alert } from "react-native";
-import styled from "@emotion/native";
-import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
 import { useAuth } from "../hooks/useAuth";
 
 export function SignupForm() {
@@ -33,12 +33,7 @@ export function SignupForm() {
 
   return (
     <Container>
-      <Input
-        label="名前（任意）"
-        placeholder="タロウ"
-        value={name}
-        onChangeText={setName}
-      />
+      <Input label="名前（任意）" placeholder="タロウ" value={name} onChangeText={setName} />
       <Input
         label="メールアドレス"
         placeholder="you@example.com"

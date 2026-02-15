@@ -1,5 +1,5 @@
 import styled from "@emotion/native";
-import { formatSpeed, formatDuration, formatDistance } from "@/utils/format";
+import { formatDistance, formatDuration, formatSpeed } from "@/utils/format";
 
 type Props = {
   speed: number;

@@ -5,10 +5,7 @@
  * バイク走行ルートを記録・管理するAPI
  * OpenAPI spec version: 1.0.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -21,9 +18,12 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
+  UseQueryResult,
+} from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import type { ErrorType } from "../../../lib/api-client";
 
+import { apiClient } from "../../../lib/api-client";
 import type {
   DeleteRoutesId200,
   DeleteRoutesId404,
@@ -41,510 +41,566 @@ import type {
   PostRoutesIdPoints200,
   PostRoutesIdPoints400,
   PostRoutesIdPoints404,
-  PostRoutesIdPointsBody
-} from '../../models';
-
-import { apiClient } from '../../../lib/api-client';
-import type { ErrorType } from '../../../lib/api-client';
-
-
-
+  PostRoutesIdPointsBody,
+} from "../../models";
 
 /**
  * @summary 記録開始
  */
-export const postRoutes = (
-    
- signal?: AbortSignal
-) => {
-      
-      
-      return apiClient<PostRoutes201>(
-      {url: `/routes`, method: 'POST', signal
-    },
-      );
-    }
-  
+export const postRoutes = (signal?: AbortSignal) => {
+  return apiClient<PostRoutes201>({ url: `/routes`, method: "POST", signal });
+};
 
+export const getPostRoutesMutationOptions = <
+  TError = ErrorType<PostRoutes401>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof postRoutes>>, TError, void, TContext>;
+}): UseMutationOptions<Awaited<ReturnType<typeof postRoutes>>, TError, void, TContext> => {
+  const mutationKey = ["postRoutes"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-export const getPostRoutesMutationOptions = <TError = ErrorType<PostRoutes401>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRoutes>>, TError,void, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof postRoutes>>, TError,void, TContext> => {
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRoutes>>, void> = () => {
+    return postRoutes();
+  };
 
-const mutationKey = ['postRoutes'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+  return { mutationFn, ...mutationOptions };
+};
 
-      
+export type PostRoutesMutationResult = NonNullable<Awaited<ReturnType<typeof postRoutes>>>;
 
+export type PostRoutesMutationError = ErrorType<PostRoutes401>;
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRoutes>>, void> = () => {
-          
-
-          return  postRoutes()
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PostRoutesMutationResult = NonNullable<Awaited<ReturnType<typeof postRoutes>>>
-    
-    export type PostRoutesMutationError = ErrorType<PostRoutes401>
-
-    /**
+/**
  * @summary 記録開始
  */
-export const usePostRoutes = <TError = ErrorType<PostRoutes401>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRoutes>>, TError,void, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof postRoutes>>,
-        TError,
-        void,
-        TContext
-      > => {
+export const usePostRoutes = <TError = ErrorType<PostRoutes401>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof postRoutes>>, TError, void, TContext>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof postRoutes>>, TError, void, TContext> => {
+  const mutationOptions = getPostRoutesMutationOptions(options);
 
-      const mutationOptions = getPostRoutesMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
+  return useMutation(mutationOptions, queryClient);
+};
+/**
  * @summary 履歴一覧
  */
-export const getRoutes = (
-    params?: GetRoutesParams,
- signal?: AbortSignal
+export const getRoutes = (params?: GetRoutesParams, signal?: AbortSignal) => {
+  return apiClient<GetRoutes200>({ url: `/routes`, method: "GET", params, signal });
+};
+
+export const getGetRoutesQueryKey = (params?: GetRoutesParams) => {
+  return [`/routes`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRoutesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRoutes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRoutesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>>;
+  },
 ) => {
-      
-      
-      return apiClient<GetRoutes200>(
-      {url: `/routes`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-  
+  const { query: queryOptions } = options ?? {};
 
+  const queryKey = queryOptions?.queryKey ?? getGetRoutesQueryKey(params);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutes>>> = ({ signal }) =>
+    getRoutes(params, signal);
 
-export const getGetRoutesQueryKey = (params?: GetRoutesParams,) => {
-    return [
-    `/routes`, ...(params ? [params]: [])
-    ] as const;
-    }
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRoutes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    
-export const getGetRoutesQueryOptions = <TData = Awaited<ReturnType<typeof getRoutes>>, TError = ErrorType<unknown>>(params?: GetRoutesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>>, }
-) => {
+export type GetRoutesQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutes>>>;
+export type GetRoutesQueryError = ErrorType<unknown>;
 
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetRoutesQueryKey(params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutes>>> = ({ signal }) => getRoutes(params, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetRoutesQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutes>>>
-export type GetRoutesQueryError = ErrorType<unknown>
-
-
-export function useGetRoutes<TData = Awaited<ReturnType<typeof getRoutes>>, TError = ErrorType<unknown>>(
- params: undefined |  GetRoutesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>> & Pick<
+export function useGetRoutes<
+  TData = Awaited<ReturnType<typeof getRoutes>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | GetRoutesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRoutes>>,
           TError,
           Awaited<ReturnType<typeof getRoutes>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoutes<TData = Awaited<ReturnType<typeof getRoutes>>, TError = ErrorType<unknown>>(
- params?: GetRoutesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRoutes<
+  TData = Awaited<ReturnType<typeof getRoutes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRoutesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRoutes>>,
           TError,
           Awaited<ReturnType<typeof getRoutes>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoutes<TData = Awaited<ReturnType<typeof getRoutes>>, TError = ErrorType<unknown>>(
- params?: GetRoutesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRoutes<
+  TData = Awaited<ReturnType<typeof getRoutes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRoutesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary 履歴一覧
  */
 
-export function useGetRoutes<TData = Awaited<ReturnType<typeof getRoutes>>, TError = ErrorType<unknown>>(
- params?: GetRoutesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetRoutes<
+  TData = Awaited<ReturnType<typeof getRoutes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetRoutesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutes>>, TError, TData>>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRoutesQueryOptions(params, options);
 
-  const queryOptions = getGetRoutesQueryOptions(params,options)
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
+  query.queryKey = queryOptions.queryKey;
 
   return query;
 }
 
-
-
 /**
  * @summary ルート詳細（ポイント含む）
  */
-export const getRoutesId = (
-    id: string,
- signal?: AbortSignal
+export const getRoutesId = (id: string, signal?: AbortSignal) => {
+  return apiClient<GetRoutesId200>({ url: `/routes/${id}`, method: "GET", signal });
+};
+
+export const getGetRoutesIdQueryKey = (id?: string) => {
+  return [`/routes/${id}`] as const;
+};
+
+export const getGetRoutesIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRoutesId>>,
+  TError = ErrorType<GetRoutesId404>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>>;
+  },
 ) => {
-      
-      
-      return apiClient<GetRoutesId200>(
-      {url: `/routes/${id}`, method: 'GET', signal
-    },
-      );
-    }
-  
+  const { query: queryOptions } = options ?? {};
 
+  const queryKey = queryOptions?.queryKey ?? getGetRoutesIdQueryKey(id);
 
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutesId>>> = ({ signal }) =>
+    getRoutesId(id, signal);
 
-export const getGetRoutesIdQueryKey = (id?: string,) => {
-    return [
-    `/routes/${id}`
-    ] as const;
-    }
+  return { queryKey, queryFn, enabled: !!id, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRoutesId>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    
-export const getGetRoutesIdQueryOptions = <TData = Awaited<ReturnType<typeof getRoutesId>>, TError = ErrorType<GetRoutesId404>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>>, }
-) => {
+export type GetRoutesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutesId>>>;
+export type GetRoutesIdQueryError = ErrorType<GetRoutesId404>;
 
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetRoutesIdQueryKey(id);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutesId>>> = ({ signal }) => getRoutesId(id, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetRoutesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutesId>>>
-export type GetRoutesIdQueryError = ErrorType<GetRoutesId404>
-
-
-export function useGetRoutesId<TData = Awaited<ReturnType<typeof getRoutesId>>, TError = ErrorType<GetRoutesId404>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>> & Pick<
+export function useGetRoutesId<
+  TData = Awaited<ReturnType<typeof getRoutesId>>,
+  TError = ErrorType<GetRoutesId404>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>> &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRoutesId>>,
           TError,
           Awaited<ReturnType<typeof getRoutesId>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoutesId<TData = Awaited<ReturnType<typeof getRoutesId>>, TError = ErrorType<GetRoutesId404>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>> & Pick<
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRoutesId<
+  TData = Awaited<ReturnType<typeof getRoutesId>>,
+  TError = ErrorType<GetRoutesId404>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>> &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRoutesId>>,
           TError,
           Awaited<ReturnType<typeof getRoutesId>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRoutesId<TData = Awaited<ReturnType<typeof getRoutesId>>, TError = ErrorType<GetRoutesId404>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        "initialData"
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRoutesId<
+  TData = Awaited<ReturnType<typeof getRoutesId>>,
+  TError = ErrorType<GetRoutesId404>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
  * @summary ルート詳細（ポイント含む）
  */
 
-export function useGetRoutesId<TData = Awaited<ReturnType<typeof getRoutesId>>, TError = ErrorType<GetRoutesId404>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>>, }
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useGetRoutesId<
+  TData = Awaited<ReturnType<typeof getRoutesId>>,
+  TError = ErrorType<GetRoutesId404>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesId>>, TError, TData>>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRoutesIdQueryOptions(id, options);
 
-  const queryOptions = getGetRoutesIdQueryOptions(id,options)
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
 
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
+  query.queryKey = queryOptions.queryKey;
 
   return query;
 }
 
+/**
+ * @summary タイトル編集
+ */
+export const patchRoutesId = (id: string, patchRoutesIdBody: PatchRoutesIdBody) => {
+  return apiClient<PatchRoutesId200>({
+    url: `/routes/${id}`,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    data: patchRoutesIdBody,
+  });
+};
 
+export const getPatchRoutesIdMutationOptions = <
+  TError = ErrorType<PatchRoutesId404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchRoutesId>>,
+    TError,
+    { id: string; data: PatchRoutesIdBody },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof patchRoutesId>>,
+  TError,
+  { id: string; data: PatchRoutesIdBody },
+  TContext
+> => {
+  const mutationKey = ["patchRoutesId"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof patchRoutesId>>,
+    { id: string; data: PatchRoutesIdBody }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return patchRoutesId(id, data);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PatchRoutesIdMutationResult = NonNullable<Awaited<ReturnType<typeof patchRoutesId>>>;
+export type PatchRoutesIdMutationBody = PatchRoutesIdBody;
+export type PatchRoutesIdMutationError = ErrorType<PatchRoutesId404>;
 
 /**
  * @summary タイトル編集
  */
-export const patchRoutesId = (
-    id: string,
-    patchRoutesIdBody: PatchRoutesIdBody,
- ) => {
-      
-      
-      return apiClient<PatchRoutesId200>(
-      {url: `/routes/${id}`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchRoutesIdBody
-    },
-      );
-    }
-  
+export const usePatchRoutesId = <TError = ErrorType<PatchRoutesId404>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof patchRoutesId>>,
+      TError,
+      { id: string; data: PatchRoutesIdBody },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof patchRoutesId>>,
+  TError,
+  { id: string; data: PatchRoutesIdBody },
+  TContext
+> => {
+  const mutationOptions = getPatchRoutesIdMutationOptions(options);
 
-
-export const getPatchRoutesIdMutationOptions = <TError = ErrorType<PatchRoutesId404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchRoutesId>>, TError,{id: string;data: PatchRoutesIdBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof patchRoutesId>>, TError,{id: string;data: PatchRoutesIdBody}, TContext> => {
-
-const mutationKey = ['patchRoutesId'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchRoutesId>>, {id: string;data: PatchRoutesIdBody}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  patchRoutesId(id,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PatchRoutesIdMutationResult = NonNullable<Awaited<ReturnType<typeof patchRoutesId>>>
-    export type PatchRoutesIdMutationBody = PatchRoutesIdBody
-    export type PatchRoutesIdMutationError = ErrorType<PatchRoutesId404>
-
-    /**
- * @summary タイトル編集
- */
-export const usePatchRoutesId = <TError = ErrorType<PatchRoutesId404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchRoutesId>>, TError,{id: string;data: PatchRoutesIdBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof patchRoutesId>>,
-        TError,
-        {id: string;data: PatchRoutesIdBody},
-        TContext
-      > => {
-
-      const mutationOptions = getPatchRoutesIdMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
+  return useMutation(mutationOptions, queryClient);
+};
+/**
  * @summary ルート削除
  */
-export const deleteRoutesId = (
-    id: string,
- ) => {
-      
-      
-      return apiClient<DeleteRoutesId200>(
-      {url: `/routes/${id}`, method: 'DELETE'
-    },
-      );
-    }
-  
+export const deleteRoutesId = (id: string) => {
+  return apiClient<DeleteRoutesId200>({ url: `/routes/${id}`, method: "DELETE" });
+};
 
+export const getDeleteRoutesIdMutationOptions = <
+  TError = ErrorType<DeleteRoutesId404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteRoutesId>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteRoutesId>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteRoutesId"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-export const getDeleteRoutesIdMutationOptions = <TError = ErrorType<DeleteRoutesId404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRoutesId>>, TError,{id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deleteRoutesId>>, TError,{id: string}, TContext> => {
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRoutesId>>, { id: string }> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
 
-const mutationKey = ['deleteRoutesId'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+    return deleteRoutesId(id);
+  };
 
-      
+  return { mutationFn, ...mutationOptions };
+};
 
+export type DeleteRoutesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRoutesId>>>;
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRoutesId>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
+export type DeleteRoutesIdMutationError = ErrorType<DeleteRoutesId404>;
 
-          return  deleteRoutesId(id,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeleteRoutesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRoutesId>>>
-    
-    export type DeleteRoutesIdMutationError = ErrorType<DeleteRoutesId404>
-
-    /**
+/**
  * @summary ルート削除
  */
-export const useDeleteRoutesId = <TError = ErrorType<DeleteRoutesId404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteRoutesId>>, TError,{id: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteRoutesId>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
+export const useDeleteRoutesId = <TError = ErrorType<DeleteRoutesId404>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteRoutesId>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteRoutesId>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationOptions = getDeleteRoutesIdMutationOptions(options);
 
-      const mutationOptions = getDeleteRoutesIdMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
+  return useMutation(mutationOptions, queryClient);
+};
+/**
  * @summary 記録停止（距離・速度を自動計算）
  */
-export const patchRoutesIdStop = (
-    id: string,
- ) => {
-      
-      
-      return apiClient<PatchRoutesIdStop200>(
-      {url: `/routes/${id}/stop`, method: 'PATCH'
-    },
-      );
-    }
-  
+export const patchRoutesIdStop = (id: string) => {
+  return apiClient<PatchRoutesIdStop200>({ url: `/routes/${id}/stop`, method: "PATCH" });
+};
 
+export const getPatchRoutesIdStopMutationOptions = <
+  TError = ErrorType<PatchRoutesIdStop404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchRoutesIdStop>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof patchRoutesIdStop>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["patchRoutesIdStop"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-export const getPatchRoutesIdStopMutationOptions = <TError = ErrorType<PatchRoutesIdStop404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchRoutesIdStop>>, TError,{id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof patchRoutesIdStop>>, TError,{id: string}, TContext> => {
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof patchRoutesIdStop>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
 
-const mutationKey = ['patchRoutesIdStop'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+    return patchRoutesIdStop(id);
+  };
 
-      
+  return { mutationFn, ...mutationOptions };
+};
 
+export type PatchRoutesIdStopMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchRoutesIdStop>>
+>;
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchRoutesIdStop>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
+export type PatchRoutesIdStopMutationError = ErrorType<PatchRoutesIdStop404>;
 
-          return  patchRoutesIdStop(id,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PatchRoutesIdStopMutationResult = NonNullable<Awaited<ReturnType<typeof patchRoutesIdStop>>>
-    
-    export type PatchRoutesIdStopMutationError = ErrorType<PatchRoutesIdStop404>
-
-    /**
+/**
  * @summary 記録停止（距離・速度を自動計算）
  */
-export const usePatchRoutesIdStop = <TError = ErrorType<PatchRoutesIdStop404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patchRoutesIdStop>>, TError,{id: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof patchRoutesIdStop>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
+export const usePatchRoutesIdStop = <TError = ErrorType<PatchRoutesIdStop404>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof patchRoutesIdStop>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof patchRoutesIdStop>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationOptions = getPatchRoutesIdStopMutationOptions(options);
 
-      const mutationOptions = getPatchRoutesIdStopMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
+  return useMutation(mutationOptions, queryClient);
+};
+/**
  * accuracy > 50m のポイントは自動除外。100件ずつバッチinsert。
  * @summary GPSポイントバッチ送信
  */
 export const postRoutesIdPoints = (
-    id: string,
-    postRoutesIdPointsBody: PostRoutesIdPointsBody,
- signal?: AbortSignal
+  id: string,
+  postRoutesIdPointsBody: PostRoutesIdPointsBody,
+  signal?: AbortSignal,
 ) => {
-      
-      
-      return apiClient<PostRoutesIdPoints200>(
-      {url: `/routes/${id}/points`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: postRoutesIdPointsBody, signal
-    },
-      );
-    }
-  
+  return apiClient<PostRoutesIdPoints200>({
+    url: `/routes/${id}/points`,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: postRoutesIdPointsBody,
+    signal,
+  });
+};
 
+export const getPostRoutesIdPointsMutationOptions = <
+  TError = ErrorType<PostRoutesIdPoints400 | PostRoutesIdPoints404>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof postRoutesIdPoints>>,
+    TError,
+    { id: string; data: PostRoutesIdPointsBody },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof postRoutesIdPoints>>,
+  TError,
+  { id: string; data: PostRoutesIdPointsBody },
+  TContext
+> => {
+  const mutationKey = ["postRoutesIdPoints"];
+  const { mutation: mutationOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-export const getPostRoutesIdPointsMutationOptions = <TError = ErrorType<PostRoutesIdPoints400 | PostRoutesIdPoints404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRoutesIdPoints>>, TError,{id: string;data: PostRoutesIdPointsBody}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof postRoutesIdPoints>>, TError,{id: string;data: PostRoutesIdPointsBody}, TContext> => {
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof postRoutesIdPoints>>,
+    { id: string; data: PostRoutesIdPointsBody }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
-const mutationKey = ['postRoutesIdPoints'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+    return postRoutesIdPoints(id, data);
+  };
 
-      
+  return { mutationFn, ...mutationOptions };
+};
 
+export type PostRoutesIdPointsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof postRoutesIdPoints>>
+>;
+export type PostRoutesIdPointsMutationBody = PostRoutesIdPointsBody;
+export type PostRoutesIdPointsMutationError = ErrorType<
+  PostRoutesIdPoints400 | PostRoutesIdPoints404
+>;
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postRoutesIdPoints>>, {id: string;data: PostRoutesIdPointsBody}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  postRoutesIdPoints(id,data,)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type PostRoutesIdPointsMutationResult = NonNullable<Awaited<ReturnType<typeof postRoutesIdPoints>>>
-    export type PostRoutesIdPointsMutationBody = PostRoutesIdPointsBody
-    export type PostRoutesIdPointsMutationError = ErrorType<PostRoutesIdPoints400 | PostRoutesIdPoints404>
-
-    /**
+/**
  * @summary GPSポイントバッチ送信
  */
-export const usePostRoutesIdPoints = <TError = ErrorType<PostRoutesIdPoints400 | PostRoutesIdPoints404>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postRoutesIdPoints>>, TError,{id: string;data: PostRoutesIdPointsBody}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof postRoutesIdPoints>>,
-        TError,
-        {id: string;data: PostRoutesIdPointsBody},
-        TContext
-      > => {
+export const usePostRoutesIdPoints = <
+  TError = ErrorType<PostRoutesIdPoints400 | PostRoutesIdPoints404>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof postRoutesIdPoints>>,
+      TError,
+      { id: string; data: PostRoutesIdPointsBody },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof postRoutesIdPoints>>,
+  TError,
+  { id: string; data: PostRoutesIdPointsBody },
+  TContext
+> => {
+  const mutationOptions = getPostRoutesIdPointsMutationOptions(options);
 
-      const mutationOptions = getPostRoutesIdPointsMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    
+  return useMutation(mutationOptions, queryClient);
+};

@@ -5,7 +5,7 @@
  * バイク走行ルートを記録・管理するAPI
  * OpenAPI spec version: 1.0.0
  */
-import type { GetAuthMe401ErrorDetailsItem } from './getAuthMe401ErrorDetailsItem';
+import type { GetAuthMe401ErrorDetailsItem } from "./getAuthMe401ErrorDetailsItem";
 
 export type GetAuthMe401Error = {
   code: string;

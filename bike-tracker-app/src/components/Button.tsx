@@ -1,5 +1,5 @@
-import { ActivityIndicator } from "react-native";
 import styled from "@emotion/native";
+import { ActivityIndicator } from "react-native";
 
 type Variant = "primary" | "danger" | "ghost";
 

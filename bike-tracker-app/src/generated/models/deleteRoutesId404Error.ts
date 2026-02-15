@@ -5,7 +5,7 @@
  * バイク走行ルートを記録・管理するAPI
  * OpenAPI spec version: 1.0.0
  */
-import type { DeleteRoutesId404ErrorDetailsItem } from './deleteRoutesId404ErrorDetailsItem';
+import type { DeleteRoutesId404ErrorDetailsItem } from "./deleteRoutesId404ErrorDetailsItem";
 
 export type DeleteRoutesId404Error = {
   code: string;

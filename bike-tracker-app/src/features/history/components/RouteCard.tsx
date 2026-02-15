@@ -1,6 +1,6 @@
 import styled from "@emotion/native";
-import { formatDistance, formatDuration, formatDate } from "@/utils/format";
 import type { GetRoutes200DataItem } from "@/generated/models";
+import { formatDate, formatDistance, formatDuration } from "@/utils/format";
 
 type Props = { route: GetRoutes200DataItem; onPress: () => void; onLongPress: () => void };
 

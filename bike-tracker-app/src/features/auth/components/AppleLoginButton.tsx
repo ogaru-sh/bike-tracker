@@ -1,5 +1,5 @@
-import { Alert, Platform } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
+import { Alert, Platform } from "react-native";
 import { useAuth } from "../hooks/useAuth";
 
 export function AppleLoginButton() {

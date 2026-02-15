@@ -10,11 +10,7 @@ export function Input({ label, error, ...props }: Props) {
   return (
     <Wrapper>
       {label && <LabelText>{label}</LabelText>}
-      <StyledInput
-        hasError={!!error}
-        placeholderTextColor="#64748B"
-        {...props}
-      />
+      <StyledInput hasError={!!error} placeholderTextColor="#64748B" {...props} />
       {error && <ErrorText>{error}</ErrorText>}
     </Wrapper>
   );

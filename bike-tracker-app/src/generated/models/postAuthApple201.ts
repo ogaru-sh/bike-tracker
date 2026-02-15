@@ -5,7 +5,7 @@
  * バイク走行ルートを記録・管理するAPI
  * OpenAPI spec version: 1.0.0
  */
-import type { PostAuthApple201User } from './postAuthApple201User';
+import type { PostAuthApple201User } from "./postAuthApple201User";
 
 export type PostAuthApple201 = {
   token: string;

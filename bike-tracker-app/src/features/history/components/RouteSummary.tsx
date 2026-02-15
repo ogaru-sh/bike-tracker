@@ -6,9 +6,18 @@ type Props = { totalRoutes: number; totalDistanceM: number; totalDurationS: numb
 export function RouteSummary({ totalRoutes, totalDistanceM, totalDurationS }: Props) {
   return (
     <Bar>
-      <Item><ItemValue>{String(totalRoutes)}</ItemValue><ItemLabel>ルート</ItemLabel></Item>
-      <Item><ItemValue>{formatDistance(totalDistanceM)}</ItemValue><ItemLabel>合計距離</ItemLabel></Item>
-      <Item><ItemValue>{formatDuration(totalDurationS)}</ItemValue><ItemLabel>合計時間</ItemLabel></Item>
+      <Item>
+        <ItemValue>{String(totalRoutes)}</ItemValue>
+        <ItemLabel>ルート</ItemLabel>
+      </Item>
+      <Item>
+        <ItemValue>{formatDistance(totalDistanceM)}</ItemValue>
+        <ItemLabel>合計距離</ItemLabel>
+      </Item>
+      <Item>
+        <ItemValue>{formatDuration(totalDurationS)}</ItemValue>
+        <ItemLabel>合計時間</ItemLabel>
+      </Item>
     </Bar>
   );
 }

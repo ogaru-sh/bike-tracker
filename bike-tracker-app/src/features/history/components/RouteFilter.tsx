@@ -1,5 +1,5 @@
-import { ScrollView } from "react-native";
 import styled from "@emotion/native";
+import { ScrollView } from "react-native";
 import { FILTER_OPTIONS, type FilterPeriod } from "@/config/constants";
 
 type Props = {

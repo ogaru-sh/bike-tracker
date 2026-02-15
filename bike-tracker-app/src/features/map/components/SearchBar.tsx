@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
-import { FlatList, Keyboard, Alert } from "react-native";
 import styled from "@emotion/native";
+import { useCallback, useState } from "react";
+import { Alert, FlatList, Keyboard } from "react-native";
 import { searchPlace } from "../services/geocoding.service";
 import { openGoogleMapsNav } from "../services/navigation.service";
 import type { GeocodingResult } from "../types";
