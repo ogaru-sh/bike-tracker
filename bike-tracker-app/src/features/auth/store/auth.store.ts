@@ -1,22 +1,23 @@
+/**
+ * Vanilla Zustand store — React 外（api-client.ts）からトークンを参照するために使用。
+ * UI 側の stores/auth.store.ts がログイン/ログアウト時にここも同期更新する。
+ */
 import { createStore } from "zustand/vanilla";
 
-type AuthState = {
+type TokenState = {
   token: string | null;
-  userId: string | null;
-  isAuthenticated: boolean;
-  setToken: (token: string) => void;
-  login: (token: string, userId: string) => void;
-  logout: () => void;
+  setToken: (token: string | null) => void;
+  /** api-client から 401 時にログアウト状態にするためのコールバック */
+  onUnauthorized: (() => void) | null;
+  setOnUnauthorized: (cb: () => void) => void;
 };
 
-const authStore = createStore<AuthState>((set) => ({
+const tokenStore = createStore<TokenState>((set, get) => ({
   token: null,
-  userId: null,
-  isAuthenticated: false,
   setToken: (token) => set({ token }),
-  login: (token, userId) => set({ token, userId, isAuthenticated: true }),
-  logout: () => set({ token: null, userId: null, isAuthenticated: false }),
+  onUnauthorized: null,
+  setOnUnauthorized: (cb) => set({ onUnauthorized: cb }),
 }));
 
-export const getState = authStore.getState;
-export { authStore };
+export const getState = tokenStore.getState;
+export { tokenStore };

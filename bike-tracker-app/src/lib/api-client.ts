@@ -1,7 +1,7 @@
 import { getState } from "../features/auth/store/auth.store";
 
 const API_BASE_URL = __DEV__
-  ? "http://localhost:8787"
+  ? "http://localhost:8788"
   : "https://bike-tracker-api.example.workers.dev";
 
 /**
@@ -66,7 +66,7 @@ export const apiClient = async <T>({
           return retryResponse.json();
         }
       }
-      getState().logout();
+      getState().onUnauthorized?.();
     }
 
     const errorBody = await response.json().catch(() => ({

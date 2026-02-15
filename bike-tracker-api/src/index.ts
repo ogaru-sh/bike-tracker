@@ -42,7 +42,7 @@ app.get("/swagger", swaggerUI({ url: "/doc" }));
 
 // ── グローバルエラーハンドラ ────
 app.onError((err, c) => {
-  console.error(err);
+  console.error("[ERROR]", err.message, err.stack);
   return c.json(
     { error: { code: "INTERNAL_ERROR", message: "サーバー内部エラーが発生しました" } },
     500,
