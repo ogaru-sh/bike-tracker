@@ -169,6 +169,15 @@ export function RouteDetailScreen({ routeId }: Props) {
               placeholder="ルート名を入力"
               placeholderTextColor="#64748B"
             />
+            <CancelBtn
+              onPress={() => {
+                setEditing(false);
+                setTitle(routeTitle);
+              }}
+              activeOpacity={0.7}
+            >
+              <CancelBtnText>取消</CancelBtnText>
+            </CancelBtn>
             <SaveBtn onPress={handleSaveTitle} activeOpacity={0.7}>
               <SaveBtnText>保存</SaveBtnText>
             </SaveBtn>
@@ -281,6 +290,18 @@ const TitleInput = styled.TextInput`
   font-size: 16px;
   border-width: 1px;
   border-color: #3b82f6;
+`;
+
+const CancelBtn = styled.TouchableOpacity`
+  border-radius: 8px;
+  padding: 12px 16px;
+  border-width: 1px;
+  border-color: #475569;
+`;
+
+const CancelBtnText = styled.Text`
+  color: #94a3b8;
+  font-weight: 700;
 `;
 
 const SaveBtn = styled.TouchableOpacity`
