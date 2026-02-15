@@ -54,6 +54,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // 401 時のコールバックを登録
     set({ onUnauthorized: () => get().logout() });
 
+    // 開発時はログインをスキップ
+    if (__DEV__) {
+      const devUser: User = { id: "dev", email: "dev@local", name: "Dev User" };
+      set({ user: devUser, token: "dev-token", isAuthenticated: true, isLoading: false });
+      return;
+    }
+
     try {
       const token = await storage.getToken();
       if (!token) {
