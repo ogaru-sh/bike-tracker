@@ -6,7 +6,7 @@
  */
 import * as Location from "expo-location";
 import { TRACKING } from "@/config/constants";
-import { apiClient } from "@/lib/api-client";
+import { postRoutesIdPoints } from "@/generated/endpoints/routes/routes";
 import type { PointInput } from "../types";
 
 type OnLocationCallback = (lat: number, lon: number, speed: number) => void;
@@ -81,10 +81,10 @@ class LocationTracker {
     this.pointBuffer.push({
       latitude: coords.latitude,
       longitude: coords.longitude,
-      altitude: coords.altitude ?? null,
-      speed: coords.speed ?? null,
-      heading: coords.heading ?? null,
-      accuracy: coords.accuracy ?? null,
+      altitude: coords.altitude ?? undefined,
+      speed: coords.speed ?? undefined,
+      heading: coords.heading ?? undefined,
+      accuracy: coords.accuracy ?? undefined,
       recordedAt: new Date(timestamp).toISOString(),
     });
 
@@ -101,11 +101,7 @@ class LocationTracker {
     this.pointBuffer = [];
 
     try {
-      await apiClient({
-        url: `/routes/${this.routeId}/points`,
-        method: "POST",
-        data: { points },
-      });
+      await postRoutesIdPoints(this.routeId, { points });
     } catch (err) {
       console.warn("[GPS] バッチ送信失敗、バッファに戻します", err);
       this.pointBuffer = [...points, ...this.pointBuffer];

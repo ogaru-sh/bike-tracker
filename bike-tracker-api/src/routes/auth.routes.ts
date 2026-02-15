@@ -32,7 +32,7 @@ const app = new OpenAPIHono<Env>();
 const signupRoute = createRoute({
   method: "post",
   path: "/signup",
-  tags: ["認証"],
+  tags: ["Auth"],
   summary: "ユーザー登録",
   request: { body: { content: { "application/json": { schema: signupSchema } } } },
   responses: {
@@ -72,7 +72,7 @@ app.openapi(signupRoute, async (c) => {
 const loginRoute = createRoute({
   method: "post",
   path: "/login",
-  tags: ["認証"],
+  tags: ["Auth"],
   summary: "ログイン",
   request: { body: { content: { "application/json": { schema: loginSchema } } } },
   responses: {
@@ -121,7 +121,7 @@ app.openapi(loginRoute, async (c) => {
 const appleRoute = createRoute({
   method: "post",
   path: "/apple",
-  tags: ["認証"],
+  tags: ["Auth"],
   summary: "Apple IDログイン",
   request: { body: { content: { "application/json": { schema: appleAuthSchema } } } },
   responses: {
@@ -190,7 +190,7 @@ app.openapi(appleRoute, async (c) => {
 const refreshRoute = createRoute({
   method: "post",
   path: "/refresh",
-  tags: ["認証"],
+  tags: ["Auth"],
   summary: "トークンリフレッシュ",
   security: [{ Bearer: [] }],
   responses: {
@@ -225,7 +225,7 @@ app.openapi(refreshRoute, async (c) => {
 const meRoute = createRoute({
   method: "get",
   path: "/me",
-  tags: ["認証"],
+  tags: ["Auth"],
   summary: "現在のユーザー情報",
   security: [{ Bearer: [] }],
   responses: {

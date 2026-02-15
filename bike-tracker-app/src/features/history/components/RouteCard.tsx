@@ -1,8 +1,8 @@
 import styled from "@emotion/native";
 import { formatDistance, formatDuration, formatDate } from "@/utils/format";
-import type { Route } from "../types";
+import type { GetRoutes200DataItem } from "@/generated/models";
 
-type Props = { route: Route; onPress: () => void; onLongPress: () => void };
+type Props = { route: GetRoutes200DataItem; onPress: () => void; onLongPress: () => void };
 
 export function RouteCard({ route, onPress, onLongPress }: Props) {
   return (

@@ -36,7 +36,7 @@ app.use("/*", authMiddleware);
 const createRouteRoute = createRoute({
   method: "post",
   path: "/",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "記録開始",
   security: bearerSecurity,
   responses: {
@@ -64,7 +64,7 @@ app.openapi(createRouteRoute, async (c) => {
 const listRoutesRoute = createRoute({
   method: "get",
   path: "/",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "履歴一覧",
   security: bearerSecurity,
   request: { query: listRoutesQuerySchema },
@@ -104,7 +104,7 @@ app.openapi(listRoutesRoute, async (c) => {
 const getRouteRoute = createRoute({
   method: "get",
   path: "/{id}",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "ルート詳細（ポイント含む）",
   security: bearerSecurity,
   request: { params: z.object({ id: z.string() }) },
@@ -160,7 +160,7 @@ app.openapi(getRouteRoute, async (c) => {
 const stopRouteRoute = createRoute({
   method: "patch",
   path: "/{id}/stop",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "記録停止（距離・速度を自動計算）",
   security: bearerSecurity,
   request: { params: z.object({ id: z.string() }) },
@@ -243,7 +243,7 @@ app.openapi(stopRouteRoute, async (c) => {
 const updateTitleRoute = createRoute({
   method: "patch",
   path: "/{id}",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "タイトル編集",
   security: bearerSecurity,
   request: {
@@ -286,7 +286,7 @@ app.openapi(updateTitleRoute, async (c) => {
 const deleteRouteRoute = createRoute({
   method: "delete",
   path: "/{id}",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "ルート削除",
   security: bearerSecurity,
   request: { params: z.object({ id: z.string() }) },
@@ -326,7 +326,7 @@ app.openapi(deleteRouteRoute, async (c) => {
 const batchPointsRoute = createRoute({
   method: "post",
   path: "/{id}/points",
-  tags: ["ルート"],
+  tags: ["Routes"],
   summary: "GPSポイントバッチ送信",
   description: "accuracy > 50m のポイントは自動除外。100件ずつバッチinsert。",
   security: bearerSecurity,

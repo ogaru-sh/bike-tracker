@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { authApi } from "../api/auth.api";
-import { tokenStore } from "../store/auth.store";
-import type { User } from "../types";
+import {
+  postAuthSignup,
+  postAuthLogin,
+  postAuthApple,
+  getAuthMe,
+} from "@/generated/endpoints/auth/auth";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
@@ -21,11 +24,16 @@ const storage = {
   },
 };
 
+type User = { id: string; email: string | null; name: string | null };
+
 type AuthState = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  /** api-client の 401 時にログアウトするコールバック */
+  onUnauthorized: (() => void) | null;
+  setToken: (token: string | null) => void;
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name?: string) => Promise<void>;
@@ -33,17 +41,18 @@ type AuthState = {
   logout: () => Promise<void>;
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isLoading: true,
   isAuthenticated: false,
+  onUnauthorized: null,
+
+  setToken: (token) => set({ token }),
 
   initialize: async () => {
-    // api-client の 401 時にログアウトするコールバックを登録
-    tokenStore.getState().setOnUnauthorized(() => {
-      useAuthStore.getState().logout();
-    });
+    // 401 時のコールバックを登録
+    set({ onUnauthorized: () => get().logout() });
 
     try {
       const token = await storage.getToken();
@@ -51,46 +60,38 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: false });
         return;
       }
-      // トークンでユーザー情報を取得して検証
-      const user = await authApi.me(token);
+      const user = await getAuthMe();
       await storage.setUser(user);
-      tokenStore.getState().setToken(token);
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch {
-      // トークン無効 → クリアしてログアウト状態
       await storage.clear();
-      tokenStore.getState().setToken(null);
       set({ isLoading: false });
     }
   },
 
   login: async (email, password) => {
-    const res = await authApi.login(email, password);
+    const res = await postAuthLogin({ email, password });
     await storage.setToken(res.token);
     await storage.setUser(res.user);
-    tokenStore.getState().setToken(res.token);
     set({ user: res.user, token: res.token, isAuthenticated: true });
   },
 
   signup: async (email, password, name) => {
-    const res = await authApi.signup(email, password, name);
+    const res = await postAuthSignup({ email, password, name: name ?? "" });
     await storage.setToken(res.token);
     await storage.setUser(res.user);
-    tokenStore.getState().setToken(res.token);
     set({ user: res.user, token: res.token, isAuthenticated: true });
   },
 
   loginWithApple: async (idToken, name) => {
-    const res = await authApi.apple(idToken, name);
+    const res = await postAuthApple({ idToken, name });
     await storage.setToken(res.token);
-    await storage.setUser(res.user);
-    tokenStore.getState().setToken(res.token);
-    set({ user: res.user, token: res.token, isAuthenticated: true });
+    await storage.setUser(res.user as User);
+    set({ user: res.user as User, token: res.token, isAuthenticated: true });
   },
 
   logout: async () => {
     await storage.clear();
-    tokenStore.getState().setToken(null);
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));

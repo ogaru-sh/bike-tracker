@@ -3,7 +3,7 @@
  * useEffect を排除: タイマー・GPS をストア内で管理
  */
 import { create } from "zustand";
-import { apiClient } from "@/lib/api-client";
+import { postRoutes, patchRoutesIdStop } from "@/generated/endpoints/routes/routes";
 import { locationTracker } from "../services/location.service";
 import type { TrackingState } from "../types";
 
@@ -46,10 +46,7 @@ export const useTrackingStore = create<TrackingStore>((set) => ({
     if (!granted) throw new Error("位置情報の許可が必要です");
 
     // API: ルート記録開始
-    const { id } = await apiClient<{ id: string; status: string }>({
-      url: "/routes",
-      method: "POST",
-    });
+    const { id } = await postRoutes();
 
     set({ isTracking: true, routeId: id, elapsedS: 0, distanceM: 0 });
 
@@ -70,10 +67,7 @@ export const useTrackingStore = create<TrackingStore>((set) => ({
     await locationTracker.stop();
 
     // API: ルート記録停止
-    await apiClient({
-      url: `/routes/${routeId}/stop`,
-      method: "PATCH",
-    });
+    await patchRoutesIdStop(routeId);
 
     timer.clear();
 

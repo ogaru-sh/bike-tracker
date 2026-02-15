@@ -1,10 +1,10 @@
 export type PointInput = {
   latitude: number;
   longitude: number;
-  altitude?: number | null;
-  speed?: number | null;
-  heading?: number | null;
-  accuracy?: number | null;
+  altitude?: number;
+  speed?: number;
+  heading?: number;
+  accuracy?: number;
   recordedAt: string;
 };
 

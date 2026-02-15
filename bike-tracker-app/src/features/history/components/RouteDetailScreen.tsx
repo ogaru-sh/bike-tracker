@@ -1,49 +1,50 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Alert } from "react-native";
 import styled from "@emotion/native";
 import { useRouter } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
 import { formatDistance, formatDuration, formatDate } from "@/utils/format";
 import { showConfirm } from "@/components/ConfirmDialog";
 import { Button } from "@/components/Button";
-import { routesApi } from "../api/routes.api";
-import type { RouteWithPoints } from "../types";
+import {
+  useGetRoutesId,
+  usePatchRoutesId,
+  useDeleteRoutesId,
+  getGetRoutesIdQueryKey,
+  getGetRoutesQueryKey,
+} from "@/generated/endpoints/routes/routes";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Props = { routeId: string };
 
 export function RouteDetailScreen({ routeId }: Props) {
   const router = useRouter();
-  const [route, setRoute] = useState<RouteWithPoints | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
 
-  useFocusEffect(
-    useCallback(() => {
-      const fetchRoute = async () => {
-        try {
-          const data = await routesApi.get(routeId);
-          setRoute(data);
-          setTitle(data.title || "");
-        } catch {
-          Alert.alert("エラー", "ルート情報を取得できませんでした");
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchRoute();
-    }, [routeId]),
-  );
+  const { data: route, isLoading } = useGetRoutesId(routeId);
 
-  const handleSaveTitle = async () => {
+  // route が取得されたら title を同期（TanStack Query v5 では onSuccess 廃止）
+  const routeTitle = route?.title ?? "";
+  if (!editing && title !== routeTitle && route) {
+    setTitle(routeTitle);
+  }
+
+  const patchMutation = usePatchRoutesId();
+  const deleteMutation = useDeleteRoutesId();
+
+  const handleSaveTitle = () => {
     if (!route) return;
-    try {
-      await routesApi.updateTitle(route.id, title);
-      setRoute({ ...route, title });
-      setEditing(false);
-    } catch {
-      Alert.alert("エラー", "タイトルの更新に失敗しました");
-    }
+    patchMutation.mutate(
+      { id: route.id, data: { title } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetRoutesIdQueryKey(routeId) });
+          setEditing(false);
+        },
+        onError: () => Alert.alert("エラー", "タイトルの更新に失敗しました"),
+      },
+    );
   };
 
   const handleDelete = () => {
@@ -52,18 +53,21 @@ export function RouteDetailScreen({ routeId }: Props) {
       message: "このルートを完全に削除しますか？\nこの操作は取り消せません。",
       confirmLabel: "削除する",
       destructive: true,
-      onConfirm: async () => {
-        try {
-          await routesApi.delete(routeId);
-          router.back();
-        } catch {
-          Alert.alert("エラー", "削除に失敗しました");
-        }
-      },
+      onConfirm: () =>
+        deleteMutation.mutate(
+          { id: routeId },
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: getGetRoutesQueryKey() });
+              router.back();
+            },
+            onError: () => Alert.alert("エラー", "削除に失敗しました"),
+          },
+        ),
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Container>
         <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 100 }} />

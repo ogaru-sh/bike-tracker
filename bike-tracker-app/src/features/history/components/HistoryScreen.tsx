@@ -1,33 +1,55 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { FlatList, ActivityIndicator } from "react-native";
 import styled from "@emotion/native";
 import { useRouter } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
 import { showConfirm } from "@/components/ConfirmDialog";
-import { useRoutes } from "../hooks/useRoutes";
+import { useGetRoutes, useDeleteRoutesId, getGetRoutesQueryKey } from "@/generated/endpoints/routes/routes";
+import { useQueryClient } from "@tanstack/react-query";
 import { RouteFilter } from "./RouteFilter";
 import { RouteSummary } from "./RouteSummary";
 import { RouteCard } from "./RouteCard";
 import type { FilterPeriod } from "@/config/constants";
-import type { Route } from "../types";
+import type { GetRoutes200DataItem } from "@/generated/models";
+
+function getDateRange(period: FilterPeriod): { from?: string; to?: string } {
+  if (period === "all") return {};
+  const now = new Date();
+  const from = new Date(now);
+  switch (period) {
+    case "week":
+      from.setDate(from.getDate() - 7);
+      break;
+    case "month":
+      from.setMonth(from.getMonth() - 1);
+      break;
+    case "year":
+      from.setFullYear(from.getFullYear() - 1);
+      break;
+  }
+  return { from: from.toISOString(), to: now.toISOString() };
+}
 
 export function HistoryScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [period, setPeriod] = useState<FilterPeriod>("all");
-  const { routes, loading, summary, fetchRoutes, deleteRoute } = useRoutes();
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchRoutes(period);
-    }, [period, fetchRoutes]),
-  );
+  const params = useMemo(() => {
+    const range = getDateRange(period);
+    return { ...range } as Record<string, string>;
+  }, [period]);
 
-  const handleChangePeriod = useCallback(
-    (p: FilterPeriod) => {
-      setPeriod(p);
-      fetchRoutes(p);
-    },
-    [fetchRoutes],
+  const { data, isLoading } = useGetRoutes(params);
+  const deleteMutation = useDeleteRoutesId();
+
+  const routes = data?.data ?? [];
+  const summary = useMemo(
+    () => ({
+      totalRoutes: routes.length,
+      totalDistanceM: routes.reduce((sum, r) => sum + (r.distanceM ?? 0), 0),
+      totalDurationS: routes.reduce((sum, r) => sum + (r.durationS ?? 0), 0),
+    }),
+    [routes],
   );
 
   const handleDelete = useCallback(
@@ -37,14 +59,18 @@ export function HistoryScreen() {
         message: "このルートを完全に削除しますか？\nこの操作は取り消せません。",
         confirmLabel: "削除する",
         destructive: true,
-        onConfirm: () => deleteRoute(id),
+        onConfirm: () =>
+          deleteMutation.mutate(
+            { id },
+            { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetRoutesQueryKey() }) },
+          ),
       });
     },
-    [deleteRoute],
+    [deleteMutation, queryClient],
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: Route }) => (
+    ({ item }: { item: GetRoutes200DataItem }) => (
       <RouteCard
         route={item}
         onPress={() => router.push(`/(tabs)/history/${item.id}`)}
@@ -57,10 +83,10 @@ export function HistoryScreen() {
   return (
     <Container>
       <Header>走行履歴</Header>
-      <RouteFilter value={period} onChange={handleChangePeriod} />
+      <RouteFilter value={period} onChange={setPeriod} />
       <RouteSummary {...summary} />
 
-      {loading ? (
+      {isLoading ? (
         <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
       ) : routes.length === 0 ? (
         <EmptyState>

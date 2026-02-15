@@ -13,7 +13,6 @@ export default defineConfig({
       schemas: "./src/generated/models",
       client: "react-query",
       mode: "tags-split",
-      prettier: true,
 
       override: {
         query: {
@@ -23,7 +22,7 @@ export default defineConfig({
           signal: true,
         },
         mutator: {
-          path: "../lib/api-client.ts",
+          path: "./src/lib/api-client.ts",
           name: "apiClient",
         },
       },
