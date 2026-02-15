@@ -11,19 +11,66 @@ export const listRoutesQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
 });
 
+const gpsPointSchema = z.object({
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  altitude: z.number().optional(),
+  speed: z.number().min(0).optional(),
+  heading: z.number().min(0).max(360).optional(),
+  accuracy: z.number().min(0).optional(),
+  recordedAt: z.string(),
+});
+
 export const batchPointsSchema = z.object({
-  points: z
-    .array(
-      z.object({
-        latitude: z.number().min(-90).max(90),
-        longitude: z.number().min(-180).max(180),
-        altitude: z.number().optional(),
-        speed: z.number().min(0).optional(),
-        heading: z.number().min(0).max(360).optional(),
-        accuracy: z.number().min(0).optional(),
-        recordedAt: z.string(),
-      }),
-    )
-    .min(1)
-    .max(500),
+  points: z.array(gpsPointSchema).min(1).max(500),
+});
+
+// ── レスポンススキーマ ──────────
+export const routeSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string().nullable(),
+  startedAt: z.string(),
+  endedAt: z.string().nullable(),
+  distanceM: z.number().nullable(),
+  durationS: z.number().nullable(),
+  avgSpeedKmh: z.number().nullable(),
+  maxSpeedKmh: z.number().nullable(),
+  status: z.string(),
+  createdAt: z.string(),
+});
+
+export const routeWithPointsSchema = routeSchema.extend({
+  points: z.array(gpsPointSchema.extend({ id: z.string(), routeId: z.string() })),
+});
+
+export const createRouteResponseSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+});
+
+export const stopRouteResponseSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  distanceM: z.number(),
+  durationS: z.number(),
+});
+
+export const updateTitleResponseSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+});
+
+export const deleteRouteResponseSchema = z.object({
+  deleted: z.boolean(),
+});
+
+export const batchPointsResponseSchema = z.object({
+  received: z.number(),
+  stored: z.number(),
+});
+
+export const routeListResponseSchema = z.object({
+  data: z.array(routeSchema),
+  nextCursor: z.string().nullable(),
 });

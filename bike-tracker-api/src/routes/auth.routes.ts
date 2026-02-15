@@ -1,28 +1,54 @@
-import { zValidator } from "@hono/zod-validator";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { Hono } from "hono";
 import { users } from "../db/schema";
 import type { Bindings } from "../types/env";
 import { errorResponse } from "../utils/errors";
 import { generateId } from "../utils/id";
 import { signToken } from "../utils/jwt";
-import { appleAuthSchema, loginSchema, signupSchema } from "../validators/auth.validator";
+import {
+  appleAuthSchema,
+  authResponseSchema,
+  errorResponseSchema,
+  loginSchema,
+  signupSchema,
+  tokenResponseSchema,
+} from "../validators/auth.validator";
 
-const app = new Hono<{ Bindings: Bindings }>();
+const app = new OpenAPIHono<{ Bindings: Bindings }>();
 
 // ── サインアップ ────────────────
-app.post("/signup", zValidator("json", signupSchema), async (c) => {
+const signupRoute = createRoute({
+  method: "post",
+  path: "/signup",
+  tags: ["認証"],
+  summary: "ユーザー登録",
+  request: { body: { content: { "application/json": { schema: signupSchema } } } },
+  responses: {
+    201: {
+      description: "登録成功",
+      content: { "application/json": { schema: authResponseSchema } },
+    },
+    400: {
+      description: "バリデーションエラー",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+    409: {
+      description: "メール重複",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(signupRoute, async (c) => {
   const { email, password, name } = c.req.valid("json");
   const db = drizzle(c.env.DB);
 
-  // 重複チェック
   const existing = await db.select().from(users).where(eq(users.email, email)).get();
   if (existing) {
     return errorResponse(c, 409, "CONFLICT", "このメールアドレスは既に登録されています");
   }
 
-  // パスワードハッシュ（Web Crypto API）
   const encoder = new TextEncoder();
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(password));
   const passwordHash = Array.from(new Uint8Array(hashBuffer))
@@ -37,7 +63,25 @@ app.post("/signup", zValidator("json", signupSchema), async (c) => {
 });
 
 // ── ログイン ────────────────────
-app.post("/login", zValidator("json", loginSchema), async (c) => {
+const loginRoute = createRoute({
+  method: "post",
+  path: "/login",
+  tags: ["認証"],
+  summary: "ログイン",
+  request: { body: { content: { "application/json": { schema: loginSchema } } } },
+  responses: {
+    200: {
+      description: "ログイン成功",
+      content: { "application/json": { schema: authResponseSchema } },
+    },
+    401: {
+      description: "認証失敗",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(loginRoute, async (c) => {
   const { email, password } = c.req.valid("json");
   const db = drizzle(c.env.DB);
 
@@ -71,18 +115,35 @@ app.post("/login", zValidator("json", loginSchema), async (c) => {
 });
 
 // ── Apple IDログイン ─────────────
-app.post("/apple", zValidator("json", appleAuthSchema), async (c) => {
+const appleRoute = createRoute({
+  method: "post",
+  path: "/apple",
+  tags: ["認証"],
+  summary: "Apple IDログイン",
+  request: { body: { content: { "application/json": { schema: appleAuthSchema } } } },
+  responses: {
+    200: {
+      description: "ログイン成功",
+      content: { "application/json": { schema: authResponseSchema } },
+    },
+    201: {
+      description: "新規登録成功",
+      content: { "application/json": { schema: authResponseSchema } },
+    },
+    401: {
+      description: "トークン検証失敗",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(appleRoute, async (c) => {
   const { idToken, name } = c.req.valid("json");
   const db = drizzle(c.env.DB);
 
-  // Apple の idToken を検証（公開鍵取得 → JWT検証）
   let applePayload: { sub: string; email?: string };
   try {
-    const jwksRes = await fetch("https://appleid.apple.com/auth/keys");
-    const _jwks = (await jwksRes.json()) as { keys: JsonWebKey[] };
     const { createRemoteJWKSet, jwtVerify } = await import("jose");
-
-    // JWKS URL から直接検証
     const JWKS = createRemoteJWKSet(new URL("https://appleid.apple.com/auth/keys"));
     const { payload } = await jwtVerify(idToken, JWKS, {
       issuer: "https://appleid.apple.com",
@@ -93,11 +154,9 @@ app.post("/apple", zValidator("json", appleAuthSchema), async (c) => {
     return errorResponse(c, 401, "UNAUTHORIZED", "Apple IDトークンの検証に失敗しました");
   }
 
-  // 既存ユーザー検索
   let user = await db.select().from(users).where(eq(users.appleId, applePayload.sub)).get();
 
   if (!user) {
-    // 新規作成
     const id = generateId();
     await db.insert(users).values({
       id,
@@ -123,7 +182,25 @@ app.post("/apple", zValidator("json", appleAuthSchema), async (c) => {
 });
 
 // ── トークンリフレッシュ ────────
-app.post("/refresh", async (c) => {
+const refreshRoute = createRoute({
+  method: "post",
+  path: "/refresh",
+  tags: ["認証"],
+  summary: "トークンリフレッシュ",
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      description: "新トークン",
+      content: { "application/json": { schema: tokenResponseSchema } },
+    },
+    401: {
+      description: "認証失敗",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(refreshRoute, async (c) => {
   const header = c.req.header("Authorization");
   if (!header?.startsWith("Bearer ")) {
     return errorResponse(c, 401, "UNAUTHORIZED", "認証トークンが必要です");

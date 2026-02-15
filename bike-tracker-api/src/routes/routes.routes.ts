@@ -1,43 +1,81 @@
-import { zValidator } from "@hono/zod-validator";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { Hono } from "hono";
+import { z } from "zod";
 import { routePoints, routes } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { Bindings } from "../types/env";
 import { haversineDistance } from "../utils/distance";
 import { errorResponse } from "../utils/errors";
 import { generateId } from "../utils/id";
+import { errorResponseSchema } from "../validators/auth.validator";
 import {
+  batchPointsResponseSchema,
   batchPointsSchema,
+  createRouteResponseSchema,
+  deleteRouteResponseSchema,
   listRoutesQuerySchema,
+  routeListResponseSchema,
+  routeWithPointsSchema,
+  stopRouteResponseSchema,
   updateRouteTitleSchema,
+  updateTitleResponseSchema,
 } from "../validators/routes.validator";
 
 type Env = { Bindings: Bindings; Variables: { userId: string } };
 
-const app = new Hono<Env>();
+const bearerSecurity = [{ Bearer: [] }];
+
+const app = new OpenAPIHono<Env>();
 
 // 全ルートに認証必須
 app.use("/*", authMiddleware);
 
 // ── ルート記録開始 ──────────────
-app.post("/", async (c) => {
+const createRouteRoute = createRoute({
+  method: "post",
+  path: "/",
+  tags: ["ルート"],
+  summary: "記録開始",
+  security: bearerSecurity,
+  responses: {
+    201: {
+      description: "記録開始",
+      content: { "application/json": { schema: createRouteResponseSchema } },
+    },
+    401: {
+      description: "認証エラー",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(createRouteRoute, async (c) => {
   const userId = c.get("userId");
   const db = drizzle(c.env.DB);
   const id = generateId();
 
-  await db.insert(routes).values({
-    id,
-    userId,
-    startedAt: new Date().toISOString(),
-  });
-
+  await db.insert(routes).values({ id, userId, startedAt: new Date().toISOString() });
   return c.json({ id, status: "recording" }, 201);
 });
 
 // ── 履歴一覧 ────────────────────
-app.get("/", zValidator("query", listRoutesQuerySchema), async (c) => {
+const listRoutesRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags: ["ルート"],
+  summary: "履歴一覧",
+  security: bearerSecurity,
+  request: { query: listRoutesQuerySchema },
+  responses: {
+    200: {
+      description: "ルート一覧",
+      content: { "application/json": { schema: routeListResponseSchema } },
+    },
+  },
+});
+
+app.openapi(listRoutesRoute, async (c) => {
   const userId = c.get("userId");
   const { from, to, cursor, limit } = c.req.valid("query");
   const db = drizzle(c.env.DB);
@@ -62,7 +100,26 @@ app.get("/", zValidator("query", listRoutesQuerySchema), async (c) => {
 });
 
 // ── ルート詳細 ──────────────────
-app.get("/:id", async (c) => {
+const getRouteRoute = createRoute({
+  method: "get",
+  path: "/{id}",
+  tags: ["ルート"],
+  summary: "ルート詳細（ポイント含む）",
+  security: bearerSecurity,
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      description: "ルート詳細",
+      content: { "application/json": { schema: routeWithPointsSchema } },
+    },
+    404: {
+      description: "未検出",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(getRouteRoute, async (c) => {
   const userId = c.get("userId");
   const routeId = c.req.param("id");
   const db = drizzle(c.env.DB);
@@ -87,7 +144,26 @@ app.get("/:id", async (c) => {
 });
 
 // ── 記録停止 ────────────────────
-app.patch("/:id/stop", async (c) => {
+const stopRouteRoute = createRoute({
+  method: "patch",
+  path: "/{id}/stop",
+  tags: ["ルート"],
+  summary: "記録停止（距離・速度を自動計算）",
+  security: bearerSecurity,
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      description: "記録停止",
+      content: { "application/json": { schema: stopRouteResponseSchema } },
+    },
+    404: {
+      description: "未検出",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(stopRouteRoute, async (c) => {
   const userId = c.get("userId");
   const routeId = c.req.param("id");
   const db = drizzle(c.env.DB);
@@ -102,7 +178,6 @@ app.patch("/:id/stop", async (c) => {
     return errorResponse(c, 404, "NOT_FOUND", "ルートが見つかりません");
   }
 
-  // ポイントから距離・速度を計算
   const points = await db
     .select()
     .from(routePoints)
@@ -139,7 +214,7 @@ app.patch("/:id/stop", async (c) => {
       distanceM: Math.round(totalDistance),
       durationS,
       avgSpeedKmh: Math.round(avgSpeedKmh * 10) / 10,
-      maxSpeedKmh: Math.round(maxSpeed * 3.6 * 10) / 10, // m/s → km/h
+      maxSpeedKmh: Math.round(maxSpeed * 3.6 * 10) / 10,
     })
     .where(eq(routes.id, routeId));
 
@@ -152,7 +227,29 @@ app.patch("/:id/stop", async (c) => {
 });
 
 // ── タイトル編集 ────────────────
-app.patch("/:id", zValidator("json", updateRouteTitleSchema), async (c) => {
+const updateTitleRoute = createRoute({
+  method: "patch",
+  path: "/{id}",
+  tags: ["ルート"],
+  summary: "タイトル編集",
+  security: bearerSecurity,
+  request: {
+    params: z.object({ id: z.string() }),
+    body: { content: { "application/json": { schema: updateRouteTitleSchema } } },
+  },
+  responses: {
+    200: {
+      description: "更新成功",
+      content: { "application/json": { schema: updateTitleResponseSchema } },
+    },
+    404: {
+      description: "未検出",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(updateTitleRoute, async (c) => {
   const userId = c.get("userId");
   const routeId = c.req.param("id");
   const { title } = c.req.valid("json");
@@ -173,7 +270,26 @@ app.patch("/:id", zValidator("json", updateRouteTitleSchema), async (c) => {
 });
 
 // ── ルート削除 ──────────────────
-app.delete("/:id", async (c) => {
+const deleteRouteRoute = createRoute({
+  method: "delete",
+  path: "/{id}",
+  tags: ["ルート"],
+  summary: "ルート削除",
+  security: bearerSecurity,
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      description: "削除成功",
+      content: { "application/json": { schema: deleteRouteResponseSchema } },
+    },
+    404: {
+      description: "未検出",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(deleteRouteRoute, async (c) => {
   const userId = c.get("userId");
   const routeId = c.req.param("id");
   const db = drizzle(c.env.DB);
@@ -194,7 +310,34 @@ app.delete("/:id", async (c) => {
 });
 
 // ── GPSポイントバッチ送信 ───────
-app.post("/:id/points", zValidator("json", batchPointsSchema), async (c) => {
+const batchPointsRoute = createRoute({
+  method: "post",
+  path: "/{id}/points",
+  tags: ["ルート"],
+  summary: "GPSポイントバッチ送信",
+  description: "accuracy > 50m のポイントは自動除外。100件ずつバッチinsert。",
+  security: bearerSecurity,
+  request: {
+    params: z.object({ id: z.string() }),
+    body: { content: { "application/json": { schema: batchPointsSchema } } },
+  },
+  responses: {
+    200: {
+      description: "送信成功",
+      content: { "application/json": { schema: batchPointsResponseSchema } },
+    },
+    400: {
+      description: "バリデーションエラー",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+    404: {
+      description: "未検出",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.openapi(batchPointsRoute, async (c) => {
   const userId = c.get("userId");
   const routeId = c.req.param("id");
   const { points } = c.req.valid("json");
@@ -214,7 +357,6 @@ app.post("/:id/points", zValidator("json", batchPointsSchema), async (c) => {
     return errorResponse(c, 400, "VALIDATION_ERROR", "記録中のルートではありません");
   }
 
-  // accuracy > 50m のノイズを除外
   const filtered = points.filter((p) => !p.accuracy || p.accuracy <= 50);
 
   if (filtered.length > 0) {
@@ -230,7 +372,6 @@ app.post("/:id/points", zValidator("json", batchPointsSchema), async (c) => {
       recordedAt: p.recordedAt,
     }));
 
-    // D1 は1回のinsertで制限があるのでバッチ分割
     const BATCH_SIZE = 100;
     for (let i = 0; i < values.length; i += BATCH_SIZE) {
       await db.insert(routePoints).values(values.slice(i, i + BATCH_SIZE));
