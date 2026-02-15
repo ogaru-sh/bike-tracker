@@ -1,21 +1,25 @@
 /**
  * メイン地図画面
- * MapLibre は要 prebuild のため、初期段階では expo-location の
- * 地図なしビューで代替。MapLibre 導入後に MapView コンポーネントに差し替え。
+ * MapLibre GL + OpenFreeMap でリアルタイム地図表示
  */
-import { Alert } from "react-native";
+
 import styled from "@emotion/native";
-import { useTracking, TrackingControls, TrackingStats } from "@/features/tracking";
+import MapLibreGL from "@maplibre/maplibre-react-native";
+import { useMemo, useRef } from "react";
+import { Alert, StyleSheet } from "react-native";
+import { MAP } from "@/config/constants";
+import { TrackingControls, TrackingStats, useTracking } from "@/features/tracking";
 import { SearchBar } from "./SearchBar";
 
 export function MapScreen() {
   const tracking = useTracking();
+  const cameraRef = useRef<MapLibreGL.Camera>(null);
 
   const handleStart = async () => {
     try {
       await tracking.start();
-    } catch (err: any) {
-      Alert.alert("エラー", err.message);
+    } catch (err: unknown) {
+      Alert.alert("エラー", err instanceof Error ? err.message : "不明なエラー");
     }
   };
 
@@ -23,56 +27,99 @@ export function MapScreen() {
     try {
       await tracking.stop();
       Alert.alert("完了", "ルートを保存しました");
-    } catch (err: any) {
-      Alert.alert("エラー", err.message);
+    } catch (err: unknown) {
+      Alert.alert("エラー", err instanceof Error ? err.message : "不明なエラー");
     }
   };
 
+  const routeGeoJSON = useMemo(() => {
+    if (tracking.trackPoints.length < 2) return null;
+    return {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          properties: {},
+          geometry: {
+            type: "LineString" as const,
+            coordinates: tracking.trackPoints,
+          },
+        },
+      ],
+    };
+  }, [tracking.trackPoints]);
+
+  const centerCoordinate = tracking.currentLocation
+    ? [tracking.currentLocation.lon, tracking.currentLocation.lat]
+    : MAP.DEFAULT_CENTER;
+
   return (
     <Container>
-      {/* MapLibre prebuild 後にここを <MapView> に差し替え */}
-      <MapPlaceholder>
-        {tracking.currentLocation ? (
-          <LocationText>
-            📍 {tracking.currentLocation.lat.toFixed(4)}, {tracking.currentLocation.lon.toFixed(4)}
-          </LocationText>
-        ) : (
-          <LocationText>🗺 地図を読み込み中...</LocationText>
-        )}
-      </MapPlaceholder>
-
-      <SearchBar />
-
-      {tracking.isTracking && (
-        <TrackingStats
-          speed={tracking.currentSpeed}
-          elapsedS={tracking.elapsedS}
-          distanceM={tracking.distanceM}
+      <MapLibreGL.MapView style={styles.map} mapStyle={MAP.STYLE_URL}>
+        <MapLibreGL.Camera
+          ref={cameraRef}
+          centerCoordinate={centerCoordinate}
+          zoomLevel={MAP.DEFAULT_ZOOM}
+          followUserLocation={tracking.isTracking}
+          followZoomLevel={15}
         />
-      )}
+        <MapLibreGL.UserLocation visible />
+        {routeGeoJSON && (
+          <MapLibreGL.ShapeSource id="route" shape={routeGeoJSON}>
+            <MapLibreGL.LineLayer
+              id="routeLine"
+              style={{
+                lineColor: MAP.ROUTE_COLOR,
+                lineWidth: MAP.ROUTE_WIDTH,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+          </MapLibreGL.ShapeSource>
+        )}
+      </MapLibreGL.MapView>
 
-      <TrackingControls
-        isTracking={tracking.isTracking}
-        onStart={handleStart}
-        onStop={handleStop}
-      />
+      <OverlayTop>
+        <SearchBar />
+      </OverlayTop>
+
+      <OverlayBottom>
+        {tracking.isTracking && (
+          <TrackingStats
+            speed={tracking.currentSpeed}
+            elapsedS={tracking.elapsedS}
+            distanceM={tracking.distanceM}
+          />
+        )}
+        <TrackingControls
+          isTracking={tracking.isTracking}
+          onStart={handleStart}
+          onStop={handleStop}
+        />
+      </OverlayBottom>
     </Container>
   );
 }
+
+const styles = StyleSheet.create({
+  map: { flex: 1 },
+});
 
 const Container = styled.View`
   flex: 1;
   background-color: #0f172a;
 `;
 
-const MapPlaceholder = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  background-color: #1e293b;
+const OverlayTop = styled.View`
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  right: 16px;
 `;
 
-const LocationText = styled.Text`
-  color: #94a3b8;
-  font-size: 16px;
+const OverlayBottom = styled.View`
+  position: absolute;
+  bottom: 100px;
+  left: 16px;
+  right: 16px;
 `;

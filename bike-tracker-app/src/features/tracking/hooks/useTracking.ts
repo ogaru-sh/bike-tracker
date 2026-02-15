@@ -23,6 +23,7 @@ export function useTracking() {
     distanceM: state.distanceM,
     currentSpeed: state.currentSpeed,
     currentLocation: state.currentLocation,
+    trackPoints: state.trackPoints,
     start,
     stop,
   };

@@ -29,7 +29,8 @@
           "locationAlwaysAndWhenInUsePermission": "バックグラウンドで走行ルートを記録するために位置情報を使用します",
           "isIosBackgroundLocationEnabled": true
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "android": {
       "permissions": [

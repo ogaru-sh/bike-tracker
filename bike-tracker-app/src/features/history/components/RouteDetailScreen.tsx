@@ -1,20 +1,90 @@
-import { useState } from "react";
-import { ActivityIndicator, Alert } from "react-native";
 import styled from "@emotion/native";
+import MapLibreGL from "@maplibre/maplibre-react-native";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { formatDistance, formatDuration, formatDate } from "@/utils/format";
-import { showConfirm } from "@/components/ConfirmDialog";
+import { useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { Button } from "@/components/Button";
+import { showConfirm } from "@/components/ConfirmDialog";
+import { MAP } from "@/config/constants";
 import {
-  useGetRoutesId,
-  usePatchRoutesId,
-  useDeleteRoutesId,
   getGetRoutesIdQueryKey,
   getGetRoutesQueryKey,
+  useDeleteRoutesId,
+  useGetRoutesId,
+  usePatchRoutesId,
 } from "@/generated/endpoints/routes/routes";
-import { useQueryClient } from "@tanstack/react-query";
+import type { GetRoutesId200 } from "@/generated/models/getRoutesId200";
+import { formatDate, formatDistance, formatDuration } from "@/utils/format";
 
 type Props = { routeId: string };
+
+function RouteMap({ route }: { route: GetRoutesId200 }) {
+  const points = route.points ?? [];
+  const coordinates = points.map((p) => [p.longitude, p.latitude] as [number, number]);
+
+  if (coordinates.length === 0) {
+    return (
+      <MapFallback>
+        <MapFallbackText>ポイントデータがありません</MapFallbackText>
+      </MapFallback>
+    );
+  }
+
+  const bounds = coordinates.reduce(
+    (acc, [lon, lat]) => ({
+      minLon: Math.min(acc.minLon, lon),
+      maxLon: Math.max(acc.maxLon, lon),
+      minLat: Math.min(acc.minLat, lat),
+      maxLat: Math.max(acc.maxLat, lat),
+    }),
+    {
+      minLon: coordinates[0][0],
+      maxLon: coordinates[0][0],
+      minLat: coordinates[0][1],
+      maxLat: coordinates[0][1],
+    },
+  );
+
+  const routeGeoJSON = {
+    type: "FeatureCollection" as const,
+    features: [
+      {
+        type: "Feature" as const,
+        properties: {},
+        geometry: { type: "LineString" as const, coordinates },
+      },
+    ],
+  };
+
+  return (
+    <MapContainer>
+      <MapLibreGL.MapView style={rnStyles.map} mapStyle={MAP.STYLE_URL}>
+        <MapLibreGL.Camera
+          bounds={{
+            ne: [bounds.maxLon, bounds.maxLat],
+            sw: [bounds.minLon, bounds.minLat],
+            paddingTop: 40,
+            paddingBottom: 40,
+            paddingLeft: 40,
+            paddingRight: 40,
+          }}
+        />
+        <MapLibreGL.ShapeSource id="routeDetail" shape={routeGeoJSON}>
+          <MapLibreGL.LineLayer
+            id="routeDetailLine"
+            style={{
+              lineColor: MAP.ROUTE_COLOR,
+              lineWidth: MAP.ROUTE_WIDTH,
+              lineCap: "round",
+              lineJoin: "round",
+            }}
+          />
+        </MapLibreGL.ShapeSource>
+      </MapLibreGL.MapView>
+    </MapContainer>
+  );
+}
 
 export function RouteDetailScreen({ routeId }: Props) {
   const router = useRouter();
@@ -86,10 +156,8 @@ export function RouteDetailScreen({ routeId }: Props) {
   return (
     <Container>
       <ContentScroll showsVerticalScrollIndicator={false}>
-        {/* 地図プレースホルダー（MapLibre prebuild 後に差し替え） */}
-        <MapPlaceholder>
-          <MapText>🗺 ルート地図（{route.points?.length ?? 0} ポイント）</MapText>
-        </MapPlaceholder>
+        {/* ルート地図 */}
+        <RouteMap route={route} />
 
         {/* タイトル（タップで編集） */}
         {editing ? (
@@ -152,7 +220,19 @@ const ContentScroll = styled.ScrollView`
   padding: 0 16px;
 `;
 
-const MapPlaceholder = styled.View`
+const rnStyles = StyleSheet.create({
+  map: { flex: 1, borderRadius: 16 },
+});
+
+const MapContainer = styled.View`
+  height: 250px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  margin-top: 16px;
+`;
+
+const MapFallback = styled.View`
   height: 250px;
   background-color: #1e293b;
   border-radius: 16px;
@@ -162,7 +242,7 @@ const MapPlaceholder = styled.View`
   margin-top: 16px;
 `;
 
-const MapText = styled.Text`
+const MapFallbackText = styled.Text`
   color: #94a3b8;
   font-size: 15px;
 `;
