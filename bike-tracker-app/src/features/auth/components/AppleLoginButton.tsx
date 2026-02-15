@@ -26,8 +26,9 @@ export function AppleLoginButton() {
         : undefined;
 
       await loginWithApple(credential.identityToken, name || undefined);
-    } catch (err: any) {
-      if (err.code !== "ERR_REQUEST_CANCELED") {
+    } catch (err: unknown) {
+      const code = err instanceof Error ? (err as Error & { code?: string }).code : undefined;
+      if (code !== "ERR_REQUEST_CANCELED") {
         Alert.alert("エラー", "Apple IDログインに失敗しました");
       }
     }

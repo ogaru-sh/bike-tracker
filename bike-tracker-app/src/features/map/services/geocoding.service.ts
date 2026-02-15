@@ -13,8 +13,8 @@ export async function searchPlace(query: string): Promise<GeocodingResult[]> {
   const res = await fetch(url, { headers });
   if (!res.ok) return [];
 
-  const data = await res.json();
-  return data.map((item: any) => ({
+  const data: { display_name: string; lat: string; lon: string }[] = await res.json();
+  return data.map((item) => ({
     displayName: item.display_name,
     lat: Number.parseFloat(item.lat),
     lon: Number.parseFloat(item.lon),

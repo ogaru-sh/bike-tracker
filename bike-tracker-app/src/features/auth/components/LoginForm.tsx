@@ -19,8 +19,8 @@ export function LoginForm() {
     setLoading(true);
     try {
       await login(email, password);
-    } catch (err: any) {
-      Alert.alert("ログイン失敗", err.message);
+    } catch (err: unknown) {
+      Alert.alert("ログイン失敗", err instanceof Error ? err.message : "不明なエラー");
     } finally {
       setLoading(false);
     }

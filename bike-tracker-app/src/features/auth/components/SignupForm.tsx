@@ -24,8 +24,8 @@ export function SignupForm() {
     setLoading(true);
     try {
       await signup(email, password, name || undefined);
-    } catch (err: any) {
-      Alert.alert("登録失敗", err.message);
+    } catch (err: unknown) {
+      Alert.alert("登録失敗", err instanceof Error ? err.message : "不明なエラー");
     } finally {
       setLoading(false);
     }
