@@ -1,19 +1,13 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { z } from "zod";
 import { users } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { Bindings } from "../types/env";
 import { errorResponse } from "../utils/errors";
 import { generateId } from "../utils/id";
 import { signToken } from "../utils/jwt";
-import {
-  hashPassword,
-  verifyPassword,
-  isLegacySha256,
-  verifySha256,
-} from "../utils/password";
+import { hashPassword, isLegacySha256, verifyPassword, verifySha256 } from "../utils/password";
 import {
   appleAuthSchema,
   authResponseSchema,
@@ -93,7 +87,12 @@ app.openapi(loginRoute, async (c) => {
 
   const user = await db.select().from(users).where(eq(users.email, email)).get();
   if (!user || !user.passwordHash) {
-    return errorResponse(c, 401, "UNAUTHORIZED", "メールアドレスまたはパスワードが正しくありません");
+    return errorResponse(
+      c,
+      401,
+      "UNAUTHORIZED",
+      "メールアドレスまたはパスワードが正しくありません",
+    );
   }
 
   // レガシー SHA-256 → Argon2id 自動マイグレーション
@@ -110,7 +109,12 @@ app.openapi(loginRoute, async (c) => {
   }
 
   if (!valid) {
-    return errorResponse(c, 401, "UNAUTHORIZED", "メールアドレスまたはパスワードが正しくありません");
+    return errorResponse(
+      c,
+      401,
+      "UNAUTHORIZED",
+      "メールアドレスまたはパスワードが正しくありません",
+    );
   }
 
   const token = await signToken({ sub: user.id }, c.env.JWT_SECRET);

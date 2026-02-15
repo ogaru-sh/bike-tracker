@@ -1,9 +1,9 @@
-import { Alert } from "react-native";
 import styled from "@emotion/native";
 import Constants from "expo-constants";
-import { useAuth } from "@/features/auth";
+import { Alert } from "react-native";
 import { Button } from "@/components/Button";
 import { TRACKING } from "@/config/constants";
+import { useAuth } from "@/features/auth";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();

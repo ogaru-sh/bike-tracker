@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  hashPassword,
-  verifyPassword,
-  isLegacySha256,
-  verifySha256,
-} from "../utils/password";
+import { hashPassword, isLegacySha256, verifyPassword, verifySha256 } from "../utils/password";
 
 describe("password utils (PBKDF2)", () => {
   it("ハッシュ化してから検証できる", async () => {

@@ -1,6 +1,6 @@
-import { useRouter } from "expo-router";
 import styled from "@emotion/native";
-import { SignupForm, AppleLoginButton } from "@/features/auth";
+import { useRouter } from "expo-router";
+import { AppleLoginButton, SignupForm } from "@/features/auth";
 
 export default function SignupPage() {
   const router = useRouter();

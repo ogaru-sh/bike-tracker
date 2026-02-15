@@ -1,8 +1,8 @@
+import type { GpsPoint } from "@bike-tracker/shared";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { z } from "zod";
-import type { GpsPoint } from "@bike-tracker/shared";
 import { routePoints, routes } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { Bindings } from "../types/env";
@@ -231,12 +231,15 @@ app.openapi(stopRouteRoute, async (c) => {
     })
     .where(eq(routes.id, routeId));
 
-  return c.json({
-    id: routeId,
-    status: "completed",
-    distanceM: Math.round(totalDistance),
-    durationS,
-  }, 200);
+  return c.json(
+    {
+      id: routeId,
+      status: "completed",
+      distanceM: Math.round(totalDistance),
+      durationS,
+    },
+    200,
+  );
 });
 
 // ── タイトル編集 ────────────────

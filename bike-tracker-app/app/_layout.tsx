@@ -3,12 +3,13 @@
  * useEffect 排除: 認証リダイレクトは <Redirect> で宣言的に。
  * 初期化はストアの getState().initialize() をモジュールスコープで実行。
  */
-import { StatusBar } from "expo-status-bar";
-import { Redirect, Slot, useSegments } from "expo-router";
+
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/query-client";
-import { useAuth, useAuthStore } from "@/features/auth";
+import { Redirect, Slot, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { useAuth, useAuthStore } from "@/features/auth";
+import { queryClient } from "@/lib/query-client";
 
 // モジュールスコープで初期化（useEffect 不要）
 useAuthStore.getState().initialize();

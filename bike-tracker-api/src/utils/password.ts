@@ -50,7 +50,11 @@ function fromBase64(b64: string): Uint8Array {
 }
 
 /** PBKDF2 でキーを導出 */
-async function deriveKey(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
+async function deriveKey(
+  password: string,
+  salt: Uint8Array,
+  iterations: number,
+): Promise<Uint8Array> {
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
