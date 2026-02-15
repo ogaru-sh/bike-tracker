@@ -8,7 +8,12 @@ import type { Bindings } from "../types/env";
 import { errorResponse } from "../utils/errors";
 import { generateId } from "../utils/id";
 import { signToken } from "../utils/jwt";
-import { hashPassword, verifyPassword } from "../utils/password";
+import {
+  hashPassword,
+  verifyPassword,
+  isLegacySha256,
+  verifySha256,
+} from "../utils/password";
 import {
   appleAuthSchema,
   authResponseSchema,
@@ -88,22 +93,24 @@ app.openapi(loginRoute, async (c) => {
 
   const user = await db.select().from(users).where(eq(users.email, email)).get();
   if (!user || !user.passwordHash) {
-    return errorResponse(
-      c,
-      401,
-      "UNAUTHORIZED",
-      "メールアドレスまたはパスワードが正しくありません",
-    );
+    return errorResponse(c, 401, "UNAUTHORIZED", "メールアドレスまたはパスワードが正しくありません");
   }
 
-  const valid = await verifyPassword(password, user.passwordHash);
+  // レガシー SHA-256 → Argon2id 自動マイグレーション
+  let valid = false;
+  if (isLegacySha256(user.passwordHash)) {
+    valid = await verifySha256(password, user.passwordHash);
+    if (valid) {
+      // SHA-256 → Argon2id にアップグレード
+      const newHash = await hashPassword(password);
+      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, user.id));
+    }
+  } else {
+    valid = await verifyPassword(user.passwordHash, password);
+  }
+
   if (!valid) {
-    return errorResponse(
-      c,
-      401,
-      "UNAUTHORIZED",
-      "メールアドレスまたはパスワードが正しくありません",
-    );
+    return errorResponse(c, 401, "UNAUTHORIZED", "メールアドレスまたはパスワードが正しくありません");
   }
 
   const token = await signToken({ sub: user.id }, c.env.JWT_SECRET);
@@ -151,8 +158,10 @@ app.openapi(appleRoute, async (c) => {
   }
 
   let user = await db.select().from(users).where(eq(users.appleId, applePayload.sub)).get();
+  let isNew = false;
 
   if (!user) {
+    isNew = true;
     const id = generateId();
     await db.insert(users).values({
       id,
@@ -173,7 +182,7 @@ app.openapi(appleRoute, async (c) => {
   const token = await signToken({ sub: user.id }, c.env.JWT_SECRET);
   return c.json(
     { token, user: { id: user.id, email: user.email, name: user.name } },
-    user.createdAt === new Date().toISOString() ? 201 : 200,
+    isNew ? 201 : 200,
   );
 });
 
@@ -212,17 +221,17 @@ app.openapi(refreshRoute, async (c) => {
   }
 });
 
-// ── ユーザー情報取得 ─────────────
+// ── 現在のユーザー情報取得 ──────
 const meRoute = createRoute({
   method: "get",
   path: "/me",
   tags: ["認証"],
-  summary: "ログイン中のユーザー情報",
+  summary: "現在のユーザー情報",
   security: [{ Bearer: [] }],
   responses: {
     200: {
       description: "ユーザー情報",
-      content: { "application/json": { schema: z.object({ user: userSchema }) } },
+      content: { "application/json": { schema: userSchema } },
     },
     401: {
       description: "認証失敗",
@@ -232,6 +241,7 @@ const meRoute = createRoute({
 });
 
 app.use("/me", authMiddleware);
+
 app.openapi(meRoute, async (c) => {
   const userId = c.get("userId");
   const db = drizzle(c.env.DB);
@@ -241,7 +251,7 @@ app.openapi(meRoute, async (c) => {
     return errorResponse(c, 401, "UNAUTHORIZED", "ユーザーが見つかりません");
   }
 
-  return c.json({ user: { id: user.id, email: user.email, name: user.name } }, 200);
+  return c.json({ id: user.id, email: user.email, name: user.name }, 200);
 });
 
 export default app;

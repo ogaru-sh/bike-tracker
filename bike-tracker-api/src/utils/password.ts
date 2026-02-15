@@ -1,74 +1,47 @@
-const ITERATIONS = 100_000;
-const KEY_LENGTH = 32; // 256 bits
-const ALGORITHM = "PBKDF2";
-const HASH = "SHA-256";
+import { argon2id, argon2Verify } from "hash-wasm";
 
-/**
- * PBKDF2 でパスワードをハッシュ化。
- * 形式: iterations:salt(hex):hash(hex)
- */
+// ── Argon2id パラメータ ─────────
+// CF Workers CPU制限（50ms/リクエスト）内に収まるよう調整
+// parallelism=1, memorySize=4096(4MB), iterations=3 → ~10-20ms
+const ARGON2_PARAMS = {
+  parallelism: 1,
+  iterations: 3,
+  memorySize: 4096, // 4 MB
+  hashLength: 32,
+};
+
+/** パスワードをArgon2idでハッシュ化 */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await deriveKey(password, salt);
+  const salt = new Uint8Array(16);
+  crypto.getRandomValues(salt);
 
-  const saltHex = toHex(salt);
-  const hashHex = toHex(new Uint8Array(key));
-  return `${ITERATIONS}:${saltHex}:${hashHex}`;
+  return argon2id({
+    password,
+    salt,
+    ...ARGON2_PARAMS,
+    outputType: "encoded", // $argon2id$v=19$... 形式
+  });
+}
+
+/** パスワードとハッシュを検証 */
+export async function verifyPassword(hash: string, password: string): Promise<boolean> {
+  return argon2Verify({ hash, password });
 }
 
 /**
- * PBKDF2 ハッシュを検証。
- * 旧 SHA-256 形式（コロンなし64文字hex）にも対応。
+ * レガシー SHA-256 ハッシュかどうかを判定
+ * 移行期間中: SHA-256(64文字hex) → Argon2id に自動アップグレード
  */
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  // 旧形式: SHA-256 単純ハッシュ (64文字hex、コロンなし)
-  if (!stored.includes(":")) {
-    const encoder = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(password));
-    const legacyHash = toHex(new Uint8Array(hashBuffer));
-    return legacyHash === stored;
-  }
-
-  // 新形式: iterations:salt:hash
-  const [iterStr, saltHex, hashHex] = stored.split(":");
-  const iterations = Number.parseInt(iterStr, 10);
-  const salt = fromHex(saltHex);
-  const key = await deriveKey(password, salt, iterations);
-  const computed = toHex(new Uint8Array(key));
-  return computed === hashHex;
+export function isLegacySha256(hash: string): boolean {
+  return /^[0-9a-f]{64}$/.test(hash);
 }
 
-async function deriveKey(
-  password: string,
-  salt: Uint8Array,
-  iterations = ITERATIONS,
-): Promise<ArrayBuffer> {
+/** レガシー SHA-256 ハッシュで検証 */
+export async function verifySha256(password: string, hash: string): Promise<boolean> {
   const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    ALGORITHM,
-    false,
-    ["deriveBits"],
-  );
-
-  return crypto.subtle.deriveBits(
-    { name: ALGORITHM, salt, iterations, hash: HASH },
-    keyMaterial,
-    KEY_LENGTH * 8,
-  );
-}
-
-function toHex(buf: Uint8Array): string {
-  return Array.from(buf)
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(password));
+  const computed = Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function fromHex(hex: string): Uint8Array {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-  return bytes;
+  return computed === hash;
 }
