@@ -3,6 +3,7 @@ export {
   signupSchema,
   loginSchema,
   appleAuthSchema,
+  userSchema,
   authResponseSchema,
   tokenResponseSchema,
   errorResponseSchema,

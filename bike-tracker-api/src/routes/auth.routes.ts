@@ -1,11 +1,14 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
+import { z } from "zod";
 import { users } from "../db/schema";
+import { authMiddleware } from "../middleware/auth";
 import type { Bindings } from "../types/env";
 import { errorResponse } from "../utils/errors";
 import { generateId } from "../utils/id";
 import { signToken } from "../utils/jwt";
+import { hashPassword, verifyPassword } from "../utils/password";
 import {
   appleAuthSchema,
   authResponseSchema,
@@ -13,9 +16,12 @@ import {
   loginSchema,
   signupSchema,
   tokenResponseSchema,
+  userSchema,
 } from "../validators/auth.validator";
 
-const app = new OpenAPIHono<{ Bindings: Bindings }>();
+type Env = { Bindings: Bindings; Variables: { userId: string } };
+
+const app = new OpenAPIHono<Env>();
 
 // ── サインアップ ────────────────
 const signupRoute = createRoute({
@@ -49,12 +55,7 @@ app.openapi(signupRoute, async (c) => {
     return errorResponse(c, 409, "CONFLICT", "このメールアドレスは既に登録されています");
   }
 
-  const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(password));
-  const passwordHash = Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
+  const passwordHash = await hashPassword(password);
   const id = generateId();
   await db.insert(users).values({ id, email, passwordHash, name });
 
@@ -95,13 +96,8 @@ app.openapi(loginRoute, async (c) => {
     );
   }
 
-  const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(password));
-  const passwordHash = Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (passwordHash !== user.passwordHash) {
+  const valid = await verifyPassword(password, user.passwordHash);
+  if (!valid) {
     return errorResponse(
       c,
       401,
@@ -214,6 +210,38 @@ app.openapi(refreshRoute, async (c) => {
   } catch {
     return errorResponse(c, 401, "TOKEN_EXPIRED", "トークンが無効または期限切れです");
   }
+});
+
+// ── ユーザー情報取得 ─────────────
+const meRoute = createRoute({
+  method: "get",
+  path: "/me",
+  tags: ["認証"],
+  summary: "ログイン中のユーザー情報",
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      description: "ユーザー情報",
+      content: { "application/json": { schema: z.object({ user: userSchema }) } },
+    },
+    401: {
+      description: "認証失敗",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+app.use("/me", authMiddleware);
+app.openapi(meRoute, async (c) => {
+  const userId = c.get("userId");
+  const db = drizzle(c.env.DB);
+
+  const user = await db.select().from(users).where(eq(users.id, userId)).get();
+  if (!user) {
+    return errorResponse(c, 401, "UNAUTHORIZED", "ユーザーが見つかりません");
+  }
+
+  return c.json({ user: { id: user.id, email: user.email, name: user.name } }, 200);
 });
 
 export default app;
