@@ -55,7 +55,7 @@
 ### Bulletproof React Feature パターン
 
 ```
-bike-tracker-app/
+app/
 ├── app/                    # ルーティング層（薄いラッパーのみ）
 │   ├── (auth)/             #   ログイン・サインアップ
 │   └── (tabs)/             #   マップ・履歴・設定
@@ -86,7 +86,7 @@ bike-tracker-app/
 ### バックエンド
 
 ```bash
-cd bike-tracker-api
+cd api
 npm install
 npx wrangler d1 create bike-tracker-db
 npx drizzle-kit generate
@@ -96,7 +96,7 @@ npm run dev
 ### フロントエンド
 
 ```bash
-cd bike-tracker-app
+cd app
 npm install
 npx expo prebuild --platform ios
 cd ios && pod install && cd ..

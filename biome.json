@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["bike-tracker-api/src/**", "bike-tracker-app/src/**", "bike-tracker-app/app/**"]
+    "includes": ["api/src/**", "app/src/**", "app/app/**"]
   },
   "formatter": {
     "enabled": true,

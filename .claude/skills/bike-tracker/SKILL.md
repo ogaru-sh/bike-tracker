@@ -41,7 +41,7 @@ src/features/{feature-name}/
 ### バックエンドの構造
 
 ```
-bike-tracker-api/src/
+api/src/
 ├── index.ts          # エントリーポイント（Honoアプリ）
 ├── routes/           # APIルートハンドラ
 ├── middleware/        # 認証・エラーハンドリング

@@ -16,7 +16,7 @@ description: バグ調査・修正の手順。エラーログの確認、原因�
 ### 2. バックエンドのデバッグ
 
 ```bash
-cd bike-tracker-api
+cd api
 npm run dev
 # → localhost:8787 のログを確認
 # → wrangler tail で本番ログ確認
@@ -26,7 +26,7 @@ npx wrangler tail
 ### 3. フロントエンドのデバッグ
 
 ```bash
-cd bike-tracker-app
+cd app
 npx expo start
 # → Metro のログ確認
 # → React DevTools で状態確認

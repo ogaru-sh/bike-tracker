@@ -9,7 +9,7 @@ description: Hono + Zod でAPIエンドポイントを追加する手順。バ�
 
 ### 1. Zod スキーマ作成
 
-`bike-tracker-api/src/validators/{resource}.validator.ts`
+`api/src/validators/{resource}.validator.ts`
 
 ```typescript
 import { z } from "zod";
@@ -23,7 +23,7 @@ export type CreateResourceInput = z.infer<typeof createResourceSchema>;
 
 ### 2. ルートハンドラ作成
 
-`bike-tracker-api/src/routes/{resource}.routes.ts`
+`api/src/routes/{resource}.routes.ts`
 
 ```typescript
 import { Hono } from "hono";

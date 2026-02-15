@@ -8,7 +8,7 @@
 
 ```bash
 # バックエンド
-cd bike-tracker-api
+cd api
 npm run dev          # ローカル開発サーバー (localhost:8787)
 npm run deploy       # Cloudflare Workers デプロイ
 npm run db:generate  # Drizzle マイグレーション生成
@@ -16,7 +16,7 @@ npm run db:migrate:local   # ローカルDB適用
 npm run db:migrate:remote  # 本番DB適用
 
 # フロントエンド
-cd bike-tracker-app
+cd app
 npx expo start       # Metro bundler 起動
 npx expo run:ios     # iOS ビルド & 実行
 npx expo prebuild    # ネイティブプロジェクト生成
