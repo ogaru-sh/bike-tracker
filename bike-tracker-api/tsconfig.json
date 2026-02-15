@@ -10,10 +10,8 @@
     "types": ["@cloudflare/workers-types"],
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"],
-      "@bike-tracker/shared": ["../packages/shared/src/index.ts"],
-      "@bike-tracker/shared/*": ["../packages/shared/src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "../packages/shared/src/**/*"]
+  "include": ["src/**/*"]
 }

@@ -10,7 +10,6 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "@bike-tracker/shared": "*",
     "@emotion/native": "^11.11.0",
     "@emotion/react": "^11.14.0",
     "@expo/metro-runtime": "^6.1.2",

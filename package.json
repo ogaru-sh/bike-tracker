@@ -2,7 +2,7 @@
   "name": "bike-tracker",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["packages/*", "bike-tracker-api", "bike-tracker-app"],
+  "workspaces": ["bike-tracker-api", "bike-tracker-app"],
   "description": "バイク走行ルートをバックグラウンドGPSで記録・管理するiOSアプリ",
   "scripts": {
     "dev:api": "npm run dev -w bike-tracker-api",

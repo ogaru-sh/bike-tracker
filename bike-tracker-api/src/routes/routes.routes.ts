@@ -1,4 +1,3 @@
-import type { GpsPoint } from "@bike-tracker/shared";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
@@ -10,6 +9,7 @@ import { haversineDistance } from "../utils/distance";
 import { errorResponse } from "../utils/errors";
 import { generateId } from "../utils/id";
 import { errorResponseSchema } from "../validators/auth.validator";
+import type { GpsPoint } from "../validators/routes.validator";
 import {
   batchPointsResponseSchema,
   batchPointsSchema,
