@@ -1,0 +1,32 @@
+name: Deploy API
+
+# 一時無効化: 有効にするには workflow_dispatch と push のコメントを外す
+on:
+  # push:
+  #   branches: [main]
+  #   paths: [bike-tracker-api/**]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: false # 一時無効化: 有効にするにはこの行を削除
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bike-tracker-api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bike-tracker-api/package-lock.json
+
+      - run: npm ci
+
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
