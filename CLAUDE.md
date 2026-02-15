@@ -44,3 +44,14 @@ npx expo prebuild    # ネイティブプロジェクト生成
 - **バック**: Cloudflare Workers + Hono, D1 + Drizzle ORM, Zod, jose (JWT)
 - **認証**: メール+パスワード / Apple ID
 - **GPS**: react-native-background-geolocation（5秒間隔、30秒バッチ送信）
+- **リンター/フォーマッター**: Biome（ルートの biome.json で全パッケージ統一）
+- **パッケージマネージャー**: npm（yarn/pnpm/bun は使わない）
+
+## 技術判断メモ
+
+### パッケージマネージャー: npm を採用（2025-02）
+
+bun（高速だがExpoとの互換性が不完全）、yarn（npmとの差が縮小）、
+pnpm（モノレポ向きだが導入コスト）を検討した結果、
+npm を採用。理由: Node.js標準で安定性最高、Expo/wrangler との互換性問題なし、
+個人開発ではインストール速度の差が開発効率に大きく影響しない。
