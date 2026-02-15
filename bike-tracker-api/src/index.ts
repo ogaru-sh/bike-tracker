@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import type { Bindings } from "./types/env";
 import authRoutes from "./routes/auth.routes";
 import routesRoutes from "./routes/routes.routes";
+import type { Bindings } from "./types/env";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -23,7 +23,7 @@ app.onError((err, c) => {
   console.error(err);
   return c.json(
     { error: { code: "INTERNAL_ERROR", message: "サーバー内部エラーが発生しました" } },
-    500
+    500,
   );
 });
 

@@ -1,13 +1,13 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
 import { users } from "../db/schema";
-import { signupSchema, loginSchema, appleAuthSchema } from "../validators/auth.validator";
-import { signToken } from "../utils/jwt";
-import { generateId } from "../utils/id";
-import { errorResponse } from "../utils/errors";
 import type { Bindings } from "../types/env";
+import { errorResponse } from "../utils/errors";
+import { generateId } from "../utils/id";
+import { signToken } from "../utils/jwt";
+import { appleAuthSchema, loginSchema, signupSchema } from "../validators/auth.validator";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -43,7 +43,12 @@ app.post("/login", zValidator("json", loginSchema), async (c) => {
 
   const user = await db.select().from(users).where(eq(users.email, email)).get();
   if (!user || !user.passwordHash) {
-    return errorResponse(c, 401, "UNAUTHORIZED", "メールアドレスまたはパスワードが正しくありません");
+    return errorResponse(
+      c,
+      401,
+      "UNAUTHORIZED",
+      "メールアドレスまたはパスワードが正しくありません",
+    );
   }
 
   const encoder = new TextEncoder();
@@ -53,7 +58,12 @@ app.post("/login", zValidator("json", loginSchema), async (c) => {
     .join("");
 
   if (passwordHash !== user.passwordHash) {
-    return errorResponse(c, 401, "UNAUTHORIZED", "メールアドレスまたはパスワードが正しくありません");
+    return errorResponse(
+      c,
+      401,
+      "UNAUTHORIZED",
+      "メールアドレスまたはパスワードが正しくありません",
+    );
   }
 
   const token = await signToken({ sub: user.id }, c.env.JWT_SECRET);
@@ -69,7 +79,7 @@ app.post("/apple", zValidator("json", appleAuthSchema), async (c) => {
   let applePayload: { sub: string; email?: string };
   try {
     const jwksRes = await fetch("https://appleid.apple.com/auth/keys");
-    const jwks = await jwksRes.json() as { keys: JsonWebKey[] };
+    const _jwks = (await jwksRes.json()) as { keys: JsonWebKey[] };
     const { createRemoteJWKSet, jwtVerify } = await import("jose");
 
     // JWKS URL から直接検証
@@ -84,11 +94,7 @@ app.post("/apple", zValidator("json", appleAuthSchema), async (c) => {
   }
 
   // 既存ユーザー検索
-  let user = await db
-    .select()
-    .from(users)
-    .where(eq(users.appleId, applePayload.sub))
-    .get();
+  let user = await db.select().from(users).where(eq(users.appleId, applePayload.sub)).get();
 
   if (!user) {
     // 新規作成
@@ -99,13 +105,20 @@ app.post("/apple", zValidator("json", appleAuthSchema), async (c) => {
       email: applePayload.email,
       name: name || "ユーザー",
     });
-    user = { id, appleId: applePayload.sub, email: applePayload.email ?? null, passwordHash: null, name: name || "ユーザー", createdAt: new Date().toISOString() };
+    user = {
+      id,
+      appleId: applePayload.sub,
+      email: applePayload.email ?? null,
+      passwordHash: null,
+      name: name || "ユーザー",
+      createdAt: new Date().toISOString(),
+    };
   }
 
   const token = await signToken({ sub: user.id }, c.env.JWT_SECRET);
   return c.json(
     { token, user: { id: user.id, email: user.email, name: user.name } },
-    user.createdAt === new Date().toISOString() ? 201 : 200
+    user.createdAt === new Date().toISOString() ? 201 : 200,
   );
 });
 

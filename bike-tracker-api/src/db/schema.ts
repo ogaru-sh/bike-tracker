@@ -1,5 +1,5 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 // ── Users ──────────────────────
 export const users = sqliteTable("users", {
@@ -8,9 +8,7 @@ export const users = sqliteTable("users", {
   appleId: text("apple_id").unique(),
   passwordHash: text("password_hash"),
   name: text("name").notNull(),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
 // ── Routes ─────────────────────
@@ -29,9 +27,7 @@ export const routes = sqliteTable("routes", {
   status: text("status", { enum: ["recording", "completed"] })
     .notNull()
     .default("recording"),
-  createdAt: text("created_at")
-    .notNull()
-    .default(sql`(datetime('now'))`),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
 // ── Route Points ───────────────

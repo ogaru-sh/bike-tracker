@@ -20,10 +20,7 @@ export function errorResponse(
   status: number,
   code: ErrorCode,
   message: string,
-  details?: ErrorDetail[]
+  details?: ErrorDetail[],
 ) {
-  return c.json(
-    { error: { code, message, ...(details && { details }) } },
-    status as any
-  );
+  return c.json({ error: { code, message, ...(details && { details }) } }, status as any);
 }

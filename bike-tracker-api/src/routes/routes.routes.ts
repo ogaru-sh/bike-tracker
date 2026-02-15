@@ -1,18 +1,18 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
-import { routes, routePoints } from "../db/schema";
-import {
-  updateRouteTitleSchema,
-  listRoutesQuerySchema,
-  batchPointsSchema,
-} from "../validators/routes.validator";
+import { Hono } from "hono";
+import { routePoints, routes } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
-import { generateId } from "../utils/id";
+import type { Bindings } from "../types/env";
 import { haversineDistance } from "../utils/distance";
 import { errorResponse } from "../utils/errors";
-import type { Bindings } from "../types/env";
+import { generateId } from "../utils/id";
+import {
+  batchPointsSchema,
+  listRoutesQuerySchema,
+  updateRouteTitleSchema,
+} from "../validators/routes.validator";
 
 type Env = { Bindings: Bindings; Variables: { userId: string } };
 
@@ -117,7 +117,7 @@ app.patch("/:id/stop", async (c) => {
       points[i - 1].latitude,
       points[i - 1].longitude,
       points[i].latitude,
-      points[i].longitude
+      points[i].longitude,
     );
     if (points[i].speed && points[i].speed! > maxSpeed) {
       maxSpeed = points[i].speed!;
@@ -128,7 +128,7 @@ app.patch("/:id/stop", async (c) => {
   const startTime = new Date(route.startedAt).getTime();
   const endTime = new Date(endedAt).getTime();
   const durationS = Math.round((endTime - startTime) / 1000);
-  const avgSpeedKmh = durationS > 0 ? (totalDistance / 1000) / (durationS / 3600) : 0;
+  const avgSpeedKmh = durationS > 0 ? totalDistance / 1000 / (durationS / 3600) : 0;
 
   await db
     .update(routes)
@@ -142,7 +142,12 @@ app.patch("/:id/stop", async (c) => {
     })
     .where(eq(routes.id, routeId));
 
-  return c.json({ id: routeId, status: "completed", distanceM: Math.round(totalDistance), durationS });
+  return c.json({
+    id: routeId,
+    status: "completed",
+    distanceM: Math.round(totalDistance),
+    durationS,
+  });
 });
 
 // ── タイトル編集 ────────────────

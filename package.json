@@ -1,0 +1,14 @@
+{
+  "name": "bike-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "バイク走行ルートをバックグラウンドGPSで記録・管理するiOSアプリ",
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.15"
+  }
+}

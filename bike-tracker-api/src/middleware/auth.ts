@@ -1,7 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import type { Bindings } from "../types/env";
-import { verifyToken } from "../utils/jwt";
 import { errorResponse } from "../utils/errors";
+import { verifyToken } from "../utils/jwt";
 
 type Env = { Bindings: Bindings; Variables: { userId: string } };
 

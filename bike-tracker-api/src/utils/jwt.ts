@@ -1,12 +1,9 @@
-import { SignJWT, jwtVerify } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 
 const ALGORITHM = "HS256";
 const EXPIRATION = "7d";
 
-export async function signToken(
-  payload: { sub: string },
-  secret: string
-): Promise<string> {
+export async function signToken(payload: { sub: string }, secret: string): Promise<string> {
   const key = new TextEncoder().encode(secret);
   return new SignJWT(payload)
     .setProtectedHeader({ alg: ALGORITHM })
@@ -15,10 +12,7 @@ export async function signToken(
     .sign(key);
 }
 
-export async function verifyToken(
-  token: string,
-  secret: string
-): Promise<{ sub: string }> {
+export async function verifyToken(token: string, secret: string): Promise<{ sub: string }> {
   const key = new TextEncoder().encode(secret);
   const { payload } = await jwtVerify(token, key);
   return payload as { sub: string };

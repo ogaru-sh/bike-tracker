@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { signToken, verifyToken } from "../utils/jwt";
 
 const SECRET = "test-secret-for-testing-only-32chars";
@@ -19,7 +19,7 @@ describe("JWT", () => {
 
   it("改ざんされたトークンで検証失敗", async () => {
     const token = await signToken({ sub: "user-123" }, SECRET);
-    const tampered = token.slice(0, -5) + "XXXXX";
+    const tampered = `${token.slice(0, -5)}XXXXX`;
     await expect(verifyToken(tampered, SECRET)).rejects.toThrow();
   });
 });

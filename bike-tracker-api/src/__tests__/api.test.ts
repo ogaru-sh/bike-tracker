@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, expect, it } from "vitest";
 import app from "../index";
 import { signToken } from "../utils/jwt";
 
@@ -7,7 +7,7 @@ const JWT_SECRET = "test-secret-for-api-testing-32chars!";
 // ── D1モック ────────────────────
 // インメモリでSQLiteの挙動を再現する軽量モック
 function createMockD1() {
-  const tables: Record<string, any[]> = {
+  const _tables: Record<string, any[]> = {
     users: [],
     routes: [],
     route_points: [],
@@ -28,12 +28,12 @@ function createMockD1() {
         run() {
           return this._execute(query, []);
         },
-        _execute(sql: string, _params: any[]) {
+        _execute(_sql: string, _params: any[]) {
           return Promise.resolve({ results: [], success: true, meta: {} });
         },
       };
     },
-    exec(sql: string) {
+    exec(_sql: string) {
       return Promise.resolve({ count: 1, duration: 0 });
     },
     // drizzle-orm/d1 が使う内部メソッド
@@ -84,7 +84,7 @@ describe("認証ガード", () => {
         method: "POST",
         headers: { Authorization: "Bearer invalid-token" },
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(401);
   });
@@ -94,9 +94,12 @@ describe("認証ガード", () => {
     const res = await app.fetch(
       req("/routes", {
         method: "POST",
-        headers: { Authorization: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDAwMDF9.invalid" },
+        headers: {
+          Authorization:
+            "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNjAwMDAwMDAwLCJleHAiOjE2MDAwMDAwMDF9.invalid",
+        },
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(401);
   });
@@ -111,7 +114,7 @@ describe("バリデーション", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: "invalid", password: "short", name: "" }),
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(400);
   });
@@ -123,7 +126,7 @@ describe("バリデーション", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: "test@example.com", password: "abc", name: "テスト" }),
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(400);
   });
@@ -135,7 +138,7 @@ describe("バリデーション", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(400);
   });
@@ -151,7 +154,7 @@ describe("バリデーション", () => {
         },
         body: JSON.stringify({ points: [] }),
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(400);
   });
@@ -169,7 +172,7 @@ describe("バリデーション", () => {
           points: [{ latitude: 999, longitude: 139, recordedAt: "2026-01-01T00:00:00Z" }],
         }),
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(400);
   });
@@ -185,7 +188,7 @@ describe("バリデーション", () => {
         },
         body: JSON.stringify({ title: "" }),
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(400);
   });
@@ -200,7 +203,7 @@ describe("JWT統合", () => {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       }),
-      createEnv()
+      createEnv(),
     );
     // DBモックなので500になるかもしれないが、401ではない（認証は通過）
     expect(res.status).not.toBe(401);
@@ -213,7 +216,7 @@ describe("JWT統合", () => {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       }),
-      createEnv()
+      createEnv(),
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -221,10 +224,7 @@ describe("JWT統合", () => {
   });
 
   it("POST /auth/refresh — トークンなしで401", async () => {
-    const res = await app.fetch(
-      req("/auth/refresh", { method: "POST" }),
-      createEnv()
-    );
+    const res = await app.fetch(req("/auth/refresh", { method: "POST" }), createEnv());
     expect(res.status).toBe(401);
   });
 });
@@ -243,7 +243,7 @@ describe("エラーハンドリング", () => {
       req("/routes", {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      createEnv()
+      createEnv(),
     );
     // DBアクセスで失敗 → グローバルエラーハンドラが500を返す
     if (res.status === 500) {

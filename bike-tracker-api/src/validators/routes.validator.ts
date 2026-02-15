@@ -12,15 +12,18 @@ export const listRoutesQuerySchema = z.object({
 });
 
 export const batchPointsSchema = z.object({
-  points: z.array(
-    z.object({
-      latitude: z.number().min(-90).max(90),
-      longitude: z.number().min(-180).max(180),
-      altitude: z.number().optional(),
-      speed: z.number().min(0).optional(),
-      heading: z.number().min(0).max(360).optional(),
-      accuracy: z.number().min(0).optional(),
-      recordedAt: z.string(),
-    })
-  ).min(1).max(500),
+  points: z
+    .array(
+      z.object({
+        latitude: z.number().min(-90).max(90),
+        longitude: z.number().min(-180).max(180),
+        altitude: z.number().optional(),
+        speed: z.number().min(0).optional(),
+        heading: z.number().min(0).max(360).optional(),
+        accuracy: z.number().min(0).optional(),
+        recordedAt: z.string(),
+      }),
+    )
+    .min(1)
+    .max(500),
 });

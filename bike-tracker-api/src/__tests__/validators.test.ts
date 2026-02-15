@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { signupSchema, loginSchema } from "../validators/auth.validator";
+import { describe, expect, it } from "vitest";
+import { loginSchema, signupSchema } from "../validators/auth.validator";
 import { batchPointsSchema, updateRouteTitleSchema } from "../validators/routes.validator";
 
 describe("auth validators", () => {
@@ -56,9 +56,7 @@ describe("routes validators", () => {
   describe("batchPointsSchema", () => {
     it("有効なポイント", () => {
       const result = batchPointsSchema.safeParse({
-        points: [
-          { latitude: 35.68, longitude: 139.76, recordedAt: "2026-01-01T00:00:00Z" },
-        ],
+        points: [{ latitude: 35.68, longitude: 139.76, recordedAt: "2026-01-01T00:00:00Z" }],
       });
       expect(result.success).toBe(true);
     });
@@ -70,9 +68,7 @@ describe("routes validators", () => {
 
     it("緯度の範囲外", () => {
       const result = batchPointsSchema.safeParse({
-        points: [
-          { latitude: 100, longitude: 139.76, recordedAt: "2026-01-01T00:00:00Z" },
-        ],
+        points: [{ latitude: 100, longitude: 139.76, recordedAt: "2026-01-01T00:00:00Z" }],
       });
       expect(result.success).toBe(false);
     });
