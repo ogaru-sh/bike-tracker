@@ -119,8 +119,9 @@ app.patch("/:id/stop", async (c) => {
       points[i].latitude,
       points[i].longitude,
     );
-    if (points[i].speed && points[i].speed! > maxSpeed) {
-      maxSpeed = points[i].speed!;
+    const speed = points[i].speed ?? 0;
+    if (speed > maxSpeed) {
+      maxSpeed = speed;
     }
   }
 

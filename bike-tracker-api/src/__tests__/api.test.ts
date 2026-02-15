@@ -5,30 +5,23 @@ import { signToken } from "../utils/jwt";
 const JWT_SECRET = "test-secret-for-api-testing-32chars!";
 
 // ── D1モック ────────────────────
-// インメモリでSQLiteの挙動を再現する軽量モック
-function createMockD1() {
-  const _tables: Record<string, any[]> = {
-    users: [],
-    routes: [],
-    route_points: [],
-  };
-
-  return {
-    prepare(query: string) {
+function createMockD1(): D1Database {
+  const stub = {
+    prepare(_query: string) {
       return {
-        bind(...params: any[]) {
-          return this._execute(query, params);
+        bind(..._params: unknown[]) {
+          return this._execute();
         },
         all() {
-          return this._execute(query, []);
+          return this._execute();
         },
         first() {
-          return this._execute(query, []).then((r: any) => r.results?.[0] ?? null);
+          return this._execute().then((r: { results?: unknown[] }) => r.results?.[0] ?? null);
         },
         run() {
-          return this._execute(query, []);
+          return this._execute();
         },
-        _execute(_sql: string, _params: any[]) {
+        _execute() {
           return Promise.resolve({ results: [], success: true, meta: {} });
         },
       };
@@ -36,17 +29,17 @@ function createMockD1() {
     exec(_sql: string) {
       return Promise.resolve({ count: 1, duration: 0 });
     },
-    // drizzle-orm/d1 が使う内部メソッド
-    batch(stmts: any[]) {
-      return Promise.resolve(stmts.map(() => ({ results: [], success: true })));
+    batch(_stmts: unknown[]) {
+      return Promise.resolve(_stmts.map(() => ({ results: [], success: true })));
     },
   };
+  return stub as unknown as D1Database;
 }
 
 // ── ヘルパー ────────────────────
 function createEnv() {
   return {
-    DB: createMockD1() as any,
+    DB: createMockD1(),
     JWT_SECRET,
     APPLE_CLIENT_ID: "com.test.biketracker",
   };
@@ -219,8 +212,8 @@ describe("JWT統合", () => {
       createEnv(),
     );
     expect(res.status).toBe(200);
-    const json = await res.json();
-    expect((json as any).token).toBeTruthy();
+    const json = (await res.json()) as { token: string };
+    expect(json.token).toBeTruthy();
   });
 
   it("POST /auth/refresh — トークンなしで401", async () => {
@@ -247,8 +240,8 @@ describe("エラーハンドリング", () => {
     );
     // DBアクセスで失敗 → グローバルエラーハンドラが500を返す
     if (res.status === 500) {
-      const json = await res.json();
-      expect((json as any).error.code).toBe("INTERNAL_ERROR");
+      const json = (await res.json()) as { error: { code: string } };
+      expect(json.error.code).toBe("INTERNAL_ERROR");
     }
   });
 });

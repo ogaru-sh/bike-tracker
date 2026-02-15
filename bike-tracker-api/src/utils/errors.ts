@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 type ErrorCode =
   | "VALIDATION_ERROR"
@@ -17,10 +18,10 @@ type ErrorDetail = {
 
 export function errorResponse(
   c: Context,
-  status: number,
+  status: ContentfulStatusCode,
   code: ErrorCode,
   message: string,
   details?: ErrorDetail[],
 ) {
-  return c.json({ error: { code, message, ...(details && { details }) } }, status as any);
+  return c.json({ error: { code, message, ...(details && { details }) } }, status);
 }
