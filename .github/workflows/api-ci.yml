@@ -1,0 +1,60 @@
+name: API CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths: [bike-tracker-api/**]
+  pull_request:
+    branches: [main]
+    paths: [bike-tracker-api/**]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bike-tracker-api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bike-tracker-api/package-lock.json
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npm test -- --run
+        env:
+          JWT_SECRET: test-secret-for-ci
+          APPLE_CLIENT_ID: com.test.biketracker
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: bike-tracker-api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: bike-tracker-api/package-lock.json
+
+      - run: npm ci
+
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
