@@ -7,12 +7,12 @@
 import * as Location from "expo-location";
 import { TRACKING } from "@/config/constants";
 import { postRoutesIdPoints } from "@/generated/endpoints/routes/routes";
-import type { PointInput } from "../types";
+import type { PostRoutesIdPointsBodyPointsItem } from "@/generated/models";
 
 type OnLocationCallback = (lat: number, lon: number, speed: number) => void;
 
 class LocationTracker {
-  private pointBuffer: PointInput[] = [];
+  private pointBuffer: PostRoutesIdPointsBodyPointsItem[] = [];
   private batchTimer: ReturnType<typeof setInterval> | null = null;
   private routeId: string | null = null;
   private subscription: Location.LocationSubscription | null = null;
