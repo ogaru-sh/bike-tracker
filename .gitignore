@@ -31,3 +31,6 @@ android/
 
 # Serena
 .serena/memories/
+
+# Generated (re-generate with npm run generate)
+# bike-tracker-app/src/generated/

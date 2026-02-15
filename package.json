@@ -2,11 +2,18 @@
   "name": "bike-tracker",
   "version": "1.0.0",
   "private": true,
+  "workspaces": ["packages/*", "bike-tracker-api", "bike-tracker-app"],
   "description": "バイク走行ルートをバックグラウンドGPSで記録・管理するiOSアプリ",
   "scripts": {
+    "dev:api": "npm run dev -w bike-tracker-api",
+    "dev:app": "npm run start -w bike-tracker-app",
+    "generate:openapi": "npm run generate:openapi -w bike-tracker-api",
+    "generate:hooks": "npm run generate -w bike-tracker-app",
+    "generate": "npm run generate:openapi && npm run generate:hooks",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "test": "npm run test -w bike-tracker-api"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15"
