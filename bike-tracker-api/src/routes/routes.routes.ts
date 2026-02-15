@@ -2,6 +2,7 @@ import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { z } from "zod";
+import type { GpsPoint } from "@bike-tracker/shared";
 import { routePoints, routes } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { Bindings } from "../types/env";
@@ -369,10 +370,10 @@ app.openapi(batchPointsRoute, async (c) => {
     return errorResponse(c, 400, "VALIDATION_ERROR", "記録中のルートではありません");
   }
 
-  const filtered = points.filter((p) => !p.accuracy || p.accuracy <= 50);
+  const filtered = (points as GpsPoint[]).filter((p) => !p.accuracy || p.accuracy <= 50);
 
   if (filtered.length > 0) {
-    const values = filtered.map((p) => ({
+    const values = filtered.map((p: GpsPoint) => ({
       id: generateId(),
       routeId,
       latitude: p.latitude,

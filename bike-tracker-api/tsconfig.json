@@ -8,11 +8,12 @@
     "skipLibCheck": true,
     "lib": ["ESNext"],
     "types": ["@cloudflare/workers-types"],
-    "outDir": "dist",
-    "rootDir": "src",
+    "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@bike-tracker/shared": ["../packages/shared/src/index.ts"],
+      "@bike-tracker/shared/*": ["../packages/shared/src/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "../packages/shared/src/**/*"]
 }
