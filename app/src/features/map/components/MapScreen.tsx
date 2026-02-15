@@ -12,21 +12,34 @@ import { MAP } from "@/config/constants";
 import { TrackingControls, TrackingStats, useTracking } from "@/features/tracking";
 import { SearchBar } from "./SearchBar";
 
+type CameraTarget = {
+  center: [number, number];
+  ts: number;
+};
+
 export function MapScreen() {
   const tracking = useTracking();
   const cameraRef = useRef<MapLibreGL.Camera>(null);
-  const [initialCenter, setInitialCenter] = useState<[number, number]>(MAP.DEFAULT_CENTER);
+  const [cameraTarget, setCameraTarget] = useState<CameraTarget | null>(null);
+
+  const goToCurrentLocation = useCallback(async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("エラー", "位置情報の許可が必要です");
+      return;
+    }
+    const loc = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+    setCameraTarget({
+      center: [loc.coords.longitude, loc.coords.latitude],
+      ts: Date.now(),
+    });
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      setInitialCenter([loc.coords.longitude, loc.coords.latitude]);
-    })();
-  }, []);
+    goToCurrentLocation();
+  }, [goToCurrentLocation]);
 
   const handleStart = async () => {
     try {
@@ -64,35 +77,21 @@ export function MapScreen() {
 
   const handleGoToCurrentLocation = useCallback(async () => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("エラー", "位置情報の許可が必要です");
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      cameraRef.current?.setCamera({
-        centerCoordinate: [loc.coords.longitude, loc.coords.latitude],
-        zoomLevel: 15,
-        animationDuration: 500,
-      });
+      await goToCurrentLocation();
     } catch (err: unknown) {
       Alert.alert("エラー", err instanceof Error ? err.message : "現在地を取得できません");
     }
-  }, []);
-
-  const centerCoordinate = tracking.currentLocation
-    ? [tracking.currentLocation.lon, tracking.currentLocation.lat]
-    : initialCenter;
+  }, [goToCurrentLocation]);
 
   return (
     <Container>
       <MapLibreGL.MapView style={mapStyle} mapStyle={MAP.STYLE_URL}>
         <MapLibreGL.Camera
           ref={cameraRef}
-          centerCoordinate={centerCoordinate}
-          zoomLevel={MAP.DEFAULT_ZOOM}
+          key={cameraTarget?.ts}
+          centerCoordinate={cameraTarget?.center ?? MAP.DEFAULT_CENTER}
+          zoomLevel={15}
+          animationDuration={cameraTarget ? 500 : 0}
           followUserLocation={tracking.isTracking}
           followZoomLevel={15}
         />
