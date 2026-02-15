@@ -6,10 +6,10 @@ import {
   verifySha256,
 } from "../utils/password";
 
-describe("password utils (Argon2id)", () => {
+describe("password utils (PBKDF2)", () => {
   it("ハッシュ化してから検証できる", async () => {
     const hash = await hashPassword("mypassword123");
-    expect(hash).toContain("$argon2id$");
+    expect(hash).toMatch(/^pbkdf2:600000:/);
 
     const valid = await verifyPassword(hash, "mypassword123");
     expect(valid).toBe(true);
@@ -27,13 +27,22 @@ describe("password utils (Argon2id)", () => {
     expect(hash1).not.toBe(hash2);
   });
 
+  it("不正な形式のハッシュは検証失敗", async () => {
+    const valid = await verifyPassword("invalid-hash", "password");
+    expect(valid).toBe(false);
+  });
+});
+
+describe("レガシー SHA-256 マイグレーション", () => {
   it("レガシー SHA-256 ハッシュを判定できる", () => {
-    const sha256 = "a".repeat(64);
-    expect(isLegacySha256(sha256)).toBe(true);
-    expect(isLegacySha256("$argon2id$v=19$m=4096,t=3,p=1$...")).toBe(false);
+    const sha256hex = "a".repeat(64);
+    expect(isLegacySha256(sha256hex)).toBe(true);
+    expect(isLegacySha256("pbkdf2:600000:abc:def")).toBe(false);
+    expect(isLegacySha256("short")).toBe(false);
   });
 
   it("レガシー SHA-256 ハッシュを検証できる", async () => {
+    // Node.js の crypto.subtle で SHA-256 ハッシュを生成
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode("password123"));
     const legacyHash = Array.from(new Uint8Array(hashBuffer))
