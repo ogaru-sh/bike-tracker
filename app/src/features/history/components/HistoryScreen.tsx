@@ -11,13 +11,22 @@ import {
   useGetRoutes,
 } from "@/generated/endpoints/routes/routes";
 import type { GetRoutes200DataItem } from "@/generated/models";
+import { DateRangePicker } from "./DateRangePicker";
 import { RouteCard } from "./RouteCard";
 import { RouteFilter } from "./RouteFilter";
 import { RouteSortBar } from "./RouteSortBar";
 import { RouteSummary } from "./RouteSummary";
 
-function getDateRange(period: FilterPeriod): { from?: string; to?: string } {
+function getDateRange(
+  period: FilterPeriod,
+  customRange?: { from: Date; to: Date },
+): { from?: string; to?: string } {
   if (period === "all") return {};
+  if (period === "custom" && customRange) {
+    const to = new Date(customRange.to);
+    to.setHours(23, 59, 59, 999);
+    return { from: customRange.from.toISOString(), to: to.toISOString() };
+  }
   const now = new Date();
   const from = new Date(now);
   switch (period) {
@@ -34,17 +43,40 @@ function getDateRange(period: FilterPeriod): { from?: string; to?: string } {
   return { from: from.toISOString(), to: now.toISOString() };
 }
 
+function formatShort(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
 export function HistoryScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<FilterPeriod>("all");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [customRange, setCustomRange] = useState<{ from: Date; to: Date }>(() => {
+    const to = new Date();
+    const from = new Date();
+    from.setMonth(from.getMonth() - 1);
+    return { from, to };
+  });
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  const handlePeriodChange = useCallback((p: FilterPeriod) => {
+    setPeriod(p);
+    if (p === "custom") {
+      setPickerVisible(true);
+    }
+  }, []);
+
+  const handleApplyCustom = useCallback((range: { from: Date; to: Date }) => {
+    setCustomRange(range);
+    setPickerVisible(false);
+  }, []);
 
   const params = useMemo(() => {
-    const range = getDateRange(period);
+    const range = getDateRange(period, customRange);
     return { ...range } as Record<string, string>;
-  }, [period]);
+  }, [period, customRange]);
 
   const { data, isLoading } = useGetRoutes(params);
   const deleteMutation = useDeleteRoutesId();
@@ -60,6 +92,7 @@ export function HistoryScreen() {
     });
     return sortOrder === "desc" ? sorted.reverse() : sorted;
   }, [routes, sortKey, sortOrder]);
+
   const summary = useMemo(
     () => ({
       totalRoutes: routes.length,
@@ -68,6 +101,11 @@ export function HistoryScreen() {
     }),
     [routes],
   );
+
+  const customLabel =
+    period === "custom"
+      ? `${formatShort(customRange.from)} 〜 ${formatShort(customRange.to)}`
+      : undefined;
 
   const handleDelete = useCallback(
     (id: string) => {
@@ -102,7 +140,7 @@ export function HistoryScreen() {
   return (
     <Container>
       <Header>走行履歴</Header>
-      <RouteFilter value={period} onChange={setPeriod} />
+      <RouteFilter value={period} onChange={handlePeriodChange} customLabel={customLabel} />
       <RouteSummary {...summary} />
       <RouteSortBar
         sortKey={sortKey}
@@ -127,6 +165,13 @@ export function HistoryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <DateRangePicker
+        visible={pickerVisible}
+        initial={customRange}
+        onApply={handleApplyCustom}
+        onClose={() => setPickerVisible(false)}
+      />
     </Container>
   );
 }

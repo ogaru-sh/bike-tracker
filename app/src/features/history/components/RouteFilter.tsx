@@ -4,31 +4,40 @@ import { FILTER_OPTIONS, type FilterPeriod } from "@/config/constants";
 type Props = {
   value: FilterPeriod;
   onChange: (period: FilterPeriod) => void;
+  customLabel?: string;
 };
 
-export function RouteFilter({ value, onChange }: Props) {
+export function RouteFilter({ value, onChange, customLabel }: Props) {
   return (
-    <TabBar>
-      {FILTER_OPTIONS.map((opt) => (
-        <Tab
-          key={opt.value}
-          active={value === opt.value}
-          onPress={() => onChange(opt.value)}
-          activeOpacity={0.7}
-        >
-          <TabText active={value === opt.value}>{opt.label}</TabText>
-        </Tab>
-      ))}
-    </TabBar>
+    <Wrapper>
+      <TabBar>
+        {FILTER_OPTIONS.map((opt) => (
+          <Tab
+            key={opt.value}
+            active={value === opt.value}
+            onPress={() => onChange(opt.value)}
+            activeOpacity={0.7}
+          >
+            <TabText active={value === opt.value}>{opt.label}</TabText>
+          </Tab>
+        ))}
+      </TabBar>
+      {value === "custom" && customLabel ? (
+        <CustomLabel>{customLabel}</CustomLabel>
+      ) : null}
+    </Wrapper>
   );
 }
+
+const Wrapper = styled.View`
+  margin-bottom: 12px;
+`;
 
 const TabBar = styled.View`
   flex-direction: row;
   background-color: #1e293b;
   border-radius: 12px;
   padding: 3px;
-  margin-bottom: 12px;
 `;
 
 const Tab = styled.TouchableOpacity<{ active: boolean }>`
@@ -43,4 +52,11 @@ const TabText = styled.Text<{ active: boolean }>`
   color: ${(p) => (p.active ? "#FFF" : "#94A3B8")};
   font-size: 14px;
   font-weight: 600;
+`;
+
+const CustomLabel = styled.Text`
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 8px;
 `;

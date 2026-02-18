@@ -31,13 +31,14 @@ export const NOMINATIM = {
 } as const;
 
 /** 履歴フィルター期間 */
-export type FilterPeriod = "all" | "week" | "month" | "year";
+export type FilterPeriod = "all" | "week" | "month" | "year" | "custom";
 
 export const FILTER_OPTIONS: { label: string; value: FilterPeriod }[] = [
   { label: "全期間", value: "all" },
   { label: "1週間", value: "week" },
   { label: "1ヶ月", value: "month" },
   { label: "1年", value: "year" },
+  { label: "カスタム", value: "custom" },
 ];
 
 /** 履歴ソート */
