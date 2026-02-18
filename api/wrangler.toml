@@ -5,8 +5,19 @@ compatibility_date = "2024-11-01"
 [dev]
 port = 8788
 
+# --- Production ---
 [[d1_databases]]
 binding = "DB"
 database_name = "bike-tracker-db"
-database_id = "YOUR_DATABASE_ID_HERE"
+database_id = "a985b8eb-98e6-4a9e-8c1d-971c7bef2efa"
+migrations_dir = "drizzle"
+
+# --- Staging ---
+[env.staging]
+name = "bike-tracker-api-staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "bike-tracker-db-staging"
+database_id = "5b0c2c0e-a13a-41a2-8350-fce3dbd4708b"
 migrations_dir = "drizzle"
