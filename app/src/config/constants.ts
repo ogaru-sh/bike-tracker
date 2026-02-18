@@ -39,3 +39,12 @@ export const FILTER_OPTIONS: { label: string; value: FilterPeriod }[] = [
   { label: "1ヶ月", value: "month" },
   { label: "1年", value: "year" },
 ];
+
+/** 履歴ソート */
+export type SortKey = "date" | "distance";
+export type SortOrder = "asc" | "desc";
+
+export const SORT_OPTIONS: { label: string; value: SortKey }[] = [
+  { label: "日付", value: "date" },
+  { label: "距離", value: "distance" },
+];

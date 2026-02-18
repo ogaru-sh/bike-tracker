@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList } from "react-native";
 import { showConfirm } from "@/components/ConfirmDialog";
-import type { FilterPeriod } from "@/config/constants";
+import type { FilterPeriod, SortKey, SortOrder } from "@/config/constants";
 import {
   getGetRoutesQueryKey,
   useDeleteRoutesId,
@@ -13,6 +13,7 @@ import {
 import type { GetRoutes200DataItem } from "@/generated/models";
 import { RouteCard } from "./RouteCard";
 import { RouteFilter } from "./RouteFilter";
+import { RouteSortBar } from "./RouteSortBar";
 import { RouteSummary } from "./RouteSummary";
 
 function getDateRange(period: FilterPeriod): { from?: string; to?: string } {
@@ -37,6 +38,8 @@ export function HistoryScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<FilterPeriod>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const params = useMemo(() => {
     const range = getDateRange(period);
@@ -47,6 +50,16 @@ export function HistoryScreen() {
   const deleteMutation = useDeleteRoutesId();
 
   const routes = data?.data ?? [];
+
+  const sortedRoutes = useMemo(() => {
+    const sorted = [...routes].sort((a, b) => {
+      if (sortKey === "distance") {
+        return (a.distanceM ?? 0) - (b.distanceM ?? 0);
+      }
+      return new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime();
+    });
+    return sortOrder === "desc" ? sorted.reverse() : sorted;
+  }, [routes, sortKey, sortOrder]);
   const summary = useMemo(
     () => ({
       totalRoutes: routes.length,
@@ -91,10 +104,16 @@ export function HistoryScreen() {
       <Header>走行履歴</Header>
       <RouteFilter value={period} onChange={setPeriod} />
       <RouteSummary {...summary} />
+      <RouteSortBar
+        sortKey={sortKey}
+        sortOrder={sortOrder}
+        onChangeSortKey={setSortKey}
+        onToggleOrder={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+      />
 
       {isLoading ? (
         <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
-      ) : routes.length === 0 ? (
+      ) : sortedRoutes.length === 0 ? (
         <EmptyState>
           <EmptyIcon>🏍</EmptyIcon>
           <EmptyTitle>まだルートがありません</EmptyTitle>
@@ -102,7 +121,7 @@ export function HistoryScreen() {
         </EmptyState>
       ) : (
         <FlatList
-          data={routes}
+          data={sortedRoutes}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}

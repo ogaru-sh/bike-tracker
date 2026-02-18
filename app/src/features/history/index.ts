@@ -3,4 +3,5 @@ export { HistoryScreen } from "./components/HistoryScreen";
 export { RouteCard } from "./components/RouteCard";
 export { RouteDetailScreen } from "./components/RouteDetailScreen";
 export { RouteFilter } from "./components/RouteFilter";
+export { RouteSortBar } from "./components/RouteSortBar";
 export { RouteSummary } from "./components/RouteSummary";
