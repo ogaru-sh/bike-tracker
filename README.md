@@ -79,29 +79,109 @@ app/
 ### 前提条件
 
 - Node.js 18+
+- npm（yarn/pnpm/bun は使わない）
 - Xcode 15+（Mac）
-- Apple Developer Program 加入済み
-- Cloudflare アカウント
+- Cloudflare アカウント（workers.dev サブドメイン登録済み）
 
-### バックエンド
+### 1. 依存関係インストール
+
+```bash
+npm install        # ルート
+cd api && npm install
+cd ../app && npm install
+```
+
+### 2. バックエンド（API）初期セットアップ
 
 ```bash
 cd api
-npm install
+
+# Cloudflare にログイン
+npx wrangler login
+
+# D1 データベース作成（本番）
 npx wrangler d1 create bike-tracker-db
-npx drizzle-kit generate
-npm run dev
+# → 出力される database_id を wrangler.toml にセット
+
+# D1 データベース作成（ステージング）
+npx wrangler d1 create bike-tracker-db-staging
+# → 出力される database_id を wrangler.toml の [env.staging] にセット
+
+# JWT シークレット設定
+npx wrangler secret put JWT_SECRET                # 本番
+npx wrangler secret put JWT_SECRET --env staging  # ステージング
+
+# マイグレーション生成
+npm run db:generate
 ```
 
-### フロントエンド
+### 3. フロントエンド初期セットアップ
 
 ```bash
 cd app
-npm install
-npx expo prebuild --platform ios
-cd ios && pod install && cd ..
-npx expo run:ios
+npx expo prebuild --clean
+npx expo run:ios --device "iPhone 17 Pro"  # シミュレーター
 ```
+
+ネイティブモジュール追加後は `npx expo prebuild --clean` → `npx expo run:ios` が必要。
+
+---
+
+## 開発コマンド
+
+### バックエンド（api/）
+
+| コマンド | 説明 |
+|---------|------|
+| `npm run dev` | ローカル開発サーバー（localhost:8788、ローカルD1） |
+| `npm run dev:staging` | ステージングDB接続で開発（`--remote`） |
+| `npm run db:generate` | Drizzle マイグレーションファイル生成 |
+| `npm run db:migrate:local` | ローカルD1にマイグレーション適用 |
+| `npm run db:migrate:staging` | ステージングD1にマイグレーション適用 |
+| `npm run db:migrate:remote` | 本番D1にマイグレーション適用 |
+| `npm run db:seed` | ローカルDBにテストユーザー作成 |
+| `npm run deploy` | 本番デプロイ |
+| `npm run deploy:staging` | ステージングデプロイ |
+
+### フロントエンド（app/）
+
+```bash
+npx expo start                              # Metro bundler 起動
+npx expo run:ios                            # iOS ビルド & 実行
+npx expo run:ios --device "iPhone 17 Pro"   # シミュレーター指定
+npx expo prebuild --clean                   # ネイティブプロジェクト再生成
+```
+
+---
+
+## デプロイ
+
+### デプロイ先URL
+
+| 環境 | URL |
+|------|-----|
+| 本番 | https://bike-tracker-api.ogaru-sosh.workers.dev |
+| ステージング | https://bike-tracker-api-staging.ogaru-sosh.workers.dev |
+
+### デプロイ手順
+
+```bash
+cd api
+
+# ステージング
+npm run db:migrate:staging   # DBマイグレーション
+npm run deploy:staging       # Workers デプロイ
+
+# 本番
+npm run db:migrate:remote    # DBマイグレーション
+npm run deploy               # Workers デプロイ
+```
+
+### 注意事項
+
+- PBKDF2 のイテレーション回数は Cloudflare Workers の制限により **100,000回**（ブラウザ標準の 600,000 ではない）
+- `JWT_SECRET` は `wrangler secret put` で環境ごとに設定が必要
+- ローカル開発時のDBはローカルD1（`.wrangler/state/` 内）を使用
 
 ---
 
