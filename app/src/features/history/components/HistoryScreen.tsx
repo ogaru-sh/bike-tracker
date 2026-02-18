@@ -59,18 +59,12 @@ export function HistoryScreen() {
     from.setMonth(from.getMonth() - 1);
     return { from, to };
   });
-  const [pickerVisible, setPickerVisible] = useState(false);
-
   const handlePeriodChange = useCallback((p: FilterPeriod) => {
     setPeriod(p);
-    if (p === "custom") {
-      setPickerVisible(true);
-    }
   }, []);
 
   const handleApplyCustom = useCallback((range: { from: Date; to: Date }) => {
     setCustomRange(range);
-    setPickerVisible(false);
   }, []);
 
   const params = useMemo(() => {
@@ -166,12 +160,9 @@ export function HistoryScreen() {
         />
       )}
 
-      <DateRangePicker
-        visible={pickerVisible}
-        initial={customRange}
-        onApply={handleApplyCustom}
-        onClose={() => setPickerVisible(false)}
-      />
+      {period === "custom" && (
+        <DateRangePicker initial={customRange} onApply={handleApplyCustom} />
+      )}
     </Container>
   );
 }
