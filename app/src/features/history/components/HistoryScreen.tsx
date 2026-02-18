@@ -2,7 +2,7 @@ import styled from "@emotion/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList } from "react-native";
+import { ActivityIndicator, FlatList, ScrollView } from "react-native";
 import { showConfirm } from "@/components/ConfirmDialog";
 import type { FilterPeriod, SortKey, SortOrder } from "@/config/constants";
 import {
@@ -131,37 +131,59 @@ export function HistoryScreen() {
     [router, handleDelete],
   );
 
+  const listHeader = useMemo(
+    () => (
+      <>
+        <Header>走行履歴</Header>
+        <RouteFilter value={period} onChange={handlePeriodChange} customLabel={customLabel} />
+        {period === "custom" && (
+          <DateRangePicker initial={customRange} onApply={handleApplyCustom} />
+        )}
+        <RouteSummary {...summary} />
+        <RouteSortBar
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          onChangeSortKey={setSortKey}
+          onToggleOrder={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+        />
+      </>
+    ),
+    [period, handlePeriodChange, customLabel, customRange, handleApplyCustom, summary, sortKey, sortOrder],
+  );
+
+  if (isLoading) {
+    return (
+      <Container>
+        {listHeader}
+        <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
+      </Container>
+    );
+  }
+
+  if (sortedRoutes.length === 0) {
+    return (
+      <Container>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {listHeader}
+          <EmptyState>
+            <EmptyIcon>🏍</EmptyIcon>
+            <EmptyTitle>まだルートがありません</EmptyTitle>
+            <EmptySubtitle>走行を記録してみましょう</EmptySubtitle>
+          </EmptyState>
+        </ScrollView>
+      </Container>
+    );
+  }
+
   return (
     <Container>
-      <Header>走行履歴</Header>
-      <RouteFilter value={period} onChange={handlePeriodChange} customLabel={customLabel} />
-      {period === "custom" && (
-        <DateRangePicker initial={customRange} onApply={handleApplyCustom} />
-      )}
-      <RouteSummary {...summary} />
-      <RouteSortBar
-        sortKey={sortKey}
-        sortOrder={sortOrder}
-        onChangeSortKey={setSortKey}
-        onToggleOrder={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+      <FlatList
+        data={sortedRoutes}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        ListHeaderComponent={listHeader}
+        showsVerticalScrollIndicator={false}
       />
-
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
-      ) : sortedRoutes.length === 0 ? (
-        <EmptyState>
-          <EmptyIcon>🏍</EmptyIcon>
-          <EmptyTitle>まだルートがありません</EmptyTitle>
-          <EmptySubtitle>走行を記録してみましょう</EmptySubtitle>
-        </EmptyState>
-      ) : (
-        <FlatList
-          data={sortedRoutes}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
     </Container>
   );
 }
@@ -181,8 +203,7 @@ const Header = styled.Text`
 `;
 
 const EmptyState = styled.View`
-  flex: 1;
-  justify-content: center;
+  padding-top: 80px;
   align-items: center;
 `;
 
