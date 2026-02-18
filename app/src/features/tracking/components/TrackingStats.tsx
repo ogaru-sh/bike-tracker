@@ -9,7 +9,7 @@ type Props = {
 
 export function TrackingStats({ speed, elapsedS, distanceM }: Props) {
   return (
-    <Overlay>
+    <StatsCard>
       <StatItem>
         <StatValue>{formatSpeed(speed)}</StatValue>
         <StatUnit>km/h</StatUnit>
@@ -24,21 +24,25 @@ export function TrackingStats({ speed, elapsedS, distanceM }: Props) {
         <StatValue>{formatDistance(distanceM)}</StatValue>
         <StatUnit>距離</StatUnit>
       </StatItem>
-    </Overlay>
+    </StatsCard>
   );
 }
 
-const Overlay = styled.View`
-  position: absolute;
-  bottom: 100px;
-  left: 16px;
-  right: 16px;
+const StatsCard = styled.View`
   flex-direction: row;
-  background-color: rgba(15, 23, 42, 0.92);
-  border-radius: 16px;
-  padding: 14px 8px;
+  background-color: rgba(30, 41, 59, 0.95);
+  border-radius: 20px;
+  padding: 16px 12px;
   justify-content: space-around;
   align-items: center;
+  margin-bottom: 12px;
+  border-top-width: 2px;
+  border-top-color: #3b82f6;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.3;
+  shadow-radius: 8px;
+  elevation: 8;
 `;
 
 const StatItem = styled.View`
@@ -47,7 +51,7 @@ const StatItem = styled.View`
 
 const StatValue = styled.Text`
   color: #f8fafc;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
 `;
 
@@ -59,6 +63,6 @@ const StatUnit = styled.Text`
 
 const Divider = styled.View`
   width: 1px;
-  height: 32px;
-  background-color: #334155;
+  height: 36px;
+  background-color: #475569;
 `;

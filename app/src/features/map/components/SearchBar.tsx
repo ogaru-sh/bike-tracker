@@ -1,4 +1,5 @@
 import styled from "@emotion/native";
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useState } from "react";
 import { Alert, FlatList, Keyboard } from "react-native";
 import { searchPlace } from "../services/geocoding.service";
@@ -30,9 +31,15 @@ export function SearchBar() {
     openGoogleMapsNav(item.lat, item.lon);
   }, []);
 
+  const handleClear = useCallback(() => {
+    setQuery("");
+    setResults([]);
+  }, []);
+
   return (
     <Container>
-      <Row>
+      <PillContainer>
+        <Ionicons name="search" size={20} color="#94A3B8" />
         <SearchInput
           placeholder="目的地を検索..."
           placeholderTextColor="#64748B"
@@ -41,10 +48,14 @@ export function SearchBar() {
           onSubmitEditing={handleSearch}
           returnKeyType="search"
         />
-        <NavButton onPress={handleSearch} activeOpacity={0.7}>
-          <NavText>{searching ? "..." : "検索"}</NavText>
-        </NavButton>
-      </Row>
+        {searching ? (
+          <Ionicons name="ellipsis-horizontal" size={20} color="#64748B" />
+        ) : query.length > 0 ? (
+          <ClearButton onPress={handleClear} activeOpacity={0.6}>
+            <Ionicons name="close-circle" size={20} color="#64748B" />
+          </ClearButton>
+        ) : null}
+      </PillContainer>
       {results.length > 0 && (
         <ResultList>
           <FlatList
@@ -53,6 +64,12 @@ export function SearchBar() {
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <ResultItem onPress={() => handleSelect(item)}>
+                <Ionicons
+                  name="location-outline"
+                  size={16}
+                  color="#94A3B8"
+                  style={{ marginRight: 10 }}
+                />
                 <ResultText numberOfLines={2}>{item.displayName}</ResultText>
               </ResultItem>
             )}
@@ -63,55 +80,55 @@ export function SearchBar() {
   );
 }
 
-const Container = styled.View`
-  position: absolute;
-  top: 60px;
-  left: 16px;
-  right: 16px;
-  z-index: 10;
-`;
+const Container = styled.View``;
 
-const Row = styled.View`
+const PillContainer = styled.View`
   flex-direction: row;
-  gap: 8px;
+  align-items: center;
+  background-color: rgba(30, 41, 59, 0.92);
+  border-radius: 28px;
+  padding: 0 16px;
+  height: 52px;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.3;
+  shadow-radius: 8px;
+  elevation: 8;
 `;
 
 const SearchInput = styled.TextInput`
   flex: 1;
-  background-color: rgba(30, 41, 59, 0.95);
-  border-radius: 12px;
-  padding: 12px 16px;
+  padding: 0 12px;
   color: #f8fafc;
-  font-size: 15px;
+  font-size: 16px;
 `;
 
-const NavButton = styled.TouchableOpacity`
-  background-color: #3b82f6;
-  border-radius: 12px;
-  padding: 12px 16px;
-  justify-content: center;
-`;
-
-const NavText = styled.Text`
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+const ClearButton = styled.TouchableOpacity`
+  padding: 4px;
 `;
 
 const ResultList = styled.View`
   background-color: rgba(30, 41, 59, 0.98);
-  border-radius: 12px;
-  margin-top: 4px;
+  border-radius: 20px;
+  margin-top: 8px;
   max-height: 200px;
+  shadow-color: #000;
+  shadow-offset: 0px 4px;
+  shadow-opacity: 0.3;
+  shadow-radius: 8px;
+  elevation: 8;
 `;
 
 const ResultItem = styled.TouchableOpacity`
-  padding: 12px 16px;
+  flex-direction: row;
+  align-items: center;
+  padding: 14px 16px;
   border-bottom-width: 1px;
   border-bottom-color: #334155;
 `;
 
 const ResultText = styled.Text`
+  flex: 1;
   color: #e2e8f0;
   font-size: 14px;
 `;
