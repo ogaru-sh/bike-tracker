@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { RouteDetailScreen } from "@/features/history";
+import { RouteDetailScreen } from "@/features/history/components/RouteDetailScreen";
 
 export default function RouteDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();

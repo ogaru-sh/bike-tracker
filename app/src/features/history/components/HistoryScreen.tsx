@@ -135,6 +135,9 @@ export function HistoryScreen() {
     <Container>
       <Header>走行履歴</Header>
       <RouteFilter value={period} onChange={handlePeriodChange} customLabel={customLabel} />
+      {period === "custom" && (
+        <DateRangePicker initial={customRange} onApply={handleApplyCustom} />
+      )}
       <RouteSummary {...summary} />
       <RouteSortBar
         sortKey={sortKey}
@@ -158,10 +161,6 @@ export function HistoryScreen() {
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
         />
-      )}
-
-      {period === "custom" && (
-        <DateRangePicker initial={customRange} onApply={handleApplyCustom} />
       )}
     </Container>
   );
