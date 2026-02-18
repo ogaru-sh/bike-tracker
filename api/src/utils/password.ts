@@ -4,8 +4,9 @@
  * ── 採用理由 ──────────────────────────────────────────────────
  * 1. Cloudflare Workers の crypto.subtle で標準サポートされており、
  *    追加パッケージが一切不要（ゼロ依存）
- * 2. OWASP 推奨の反復回数 600,000 回を採用
- *    (https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
+ * 2. Cloudflare Workers の crypto.subtle は PBKDF2 イテレーション上限が
+ *    100,000 回のため、上限の 100,000 回を採用
+ *    （OWASP 推奨は 600,000 回だが Workers ランタイム制約により不可）
  * 3. ソルト（16バイトランダム）を毎回生成し、ハッシュと共に保存
  *
  * ── Argon2id を不採用とした理由 ──────────────────────────────
@@ -20,13 +21,13 @@
  *   このモジュールの差し替えだけで移行可能な設計にしている
  * ──────────────────────────────────────────────────────────────
  *
- * 保存形式: "pbkdf2:600000:<base64-salt>:<base64-hash>"
+ * 保存形式: "pbkdf2:100000:<base64-salt>:<base64-hash>"
  * → パラメータ内包のため、将来のイテレーション数変更にも対応可能
  */
 
 const ALGORITHM = "PBKDF2";
 const HASH_ALGORITHM = "SHA-256";
-const ITERATIONS = 600_000;
+const ITERATIONS = 100_000;
 const KEY_LENGTH = 32; // 256 bits
 const SALT_LENGTH = 16; // 128 bits
 
@@ -80,7 +81,7 @@ async function deriveKey(
 
 /**
  * パスワードをハッシュ化
- * @returns "pbkdf2:600000:<base64-salt>:<base64-hash>" 形式の文字列
+ * @returns "pbkdf2:100000:<base64-salt>:<base64-hash>" 形式の文字列
  */
 export async function hashPassword(password: string): Promise<string> {
   const salt = new Uint8Array(SALT_LENGTH);
