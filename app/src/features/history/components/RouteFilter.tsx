@@ -1,5 +1,4 @@
 import styled from "@emotion/native";
-import { ScrollView } from "react-native";
 import { FILTER_OPTIONS, type FilterPeriod } from "@/config/constants";
 
 type Props = {
@@ -9,29 +8,38 @@ type Props = {
 
 export function RouteFilter({ value, onChange }: Props) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+    <TabBar>
       {FILTER_OPTIONS.map((opt) => (
-        <Chip
+        <Tab
           key={opt.value}
           active={value === opt.value}
           onPress={() => onChange(opt.value)}
           activeOpacity={0.7}
         >
-          <ChipText active={value === opt.value}>{opt.label}</ChipText>
-        </Chip>
+          <TabText active={value === opt.value}>{opt.label}</TabText>
+        </Tab>
       ))}
-    </ScrollView>
+    </TabBar>
   );
 }
 
-const Chip = styled.TouchableOpacity<{ active: boolean }>`
-  padding: 8px 16px;
-  border-radius: 20px;
-  margin-right: 8px;
-  background-color: ${(p) => (p.active ? "#3B82F6" : "#1E293B")};
+const TabBar = styled.View`
+  flex-direction: row;
+  background-color: #1e293b;
+  border-radius: 12px;
+  padding: 3px;
+  margin-bottom: 12px;
 `;
 
-const ChipText = styled.Text<{ active: boolean }>`
+const Tab = styled.TouchableOpacity<{ active: boolean }>`
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 10px;
+  align-items: center;
+  background-color: ${(p) => (p.active ? "#3B82F6" : "transparent")};
+`;
+
+const TabText = styled.Text<{ active: boolean }>`
   color: ${(p) => (p.active ? "#FFF" : "#94A3B8")};
   font-size: 14px;
   font-weight: 600;
